@@ -1,0 +1,6 @@
+{
+  "name": "Merakya",
+  "description": "Boutique en ligne holistique et ésotérique. Alchimie du bien-être, bougies rituelles, savons naturels et élixirs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

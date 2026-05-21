@@ -9,15 +9,15 @@ import AdminPanel from './components/AdminPanel';
 import AuthGatewayModal from './components/AuthGatewayModal';
 import HelpAndInquiriesModal from './components/HelpAndInquiriesModal';
 import SpiritualLogo from './components/SpiritualLogo';
-import moroccanHeroBg from './assets/images/merakya_brand_hero_oriental_1779243623302.png';
-import imgAbondance from './assets/images/merakya_abondance_1779241793445.png';
-import imgRoseDamas from './assets/images/merakya_rose_damas_1779241813197.png';
-import imgMauvaisOeil from './assets/images/merakya_mauvais_oeil_1779241832267.png';
-import imgAlchimieArgile from './assets/images/merakya_alchimie_argile_1779241853230.png';
-import imgRoseSculptee from './assets/images/merakya_rose_sculptee_1779241869509.png';
-import imgSelsPurification from './assets/images/merakya_sels_purification_1779243565328.png';
-import imgElixirEtoiles from './assets/images/merakya_elixir_etoiles_1779243585736.png';
-import imgCoffretLune from './assets/images/merakya_coffret_lune_1779243605101.png';
+import moroccanHeroBg from '../merakya_brand_hero_oriental_1779243623302.png';
+import imgAbondance from '../merakya_abondance_1779241793445.png';
+import imgRoseDamas from '../merakya_rose_damas_1779241813197.png';
+import imgMauvaisOeil from '../merakya_mauvais_oeil_1779241832267.png';
+import imgAlchimieArgile from '../merakya_alchimie_argile_1779241853230.png';
+import imgRoseSculptee from '../merakya_rose_sculptee_1779241869509.png';
+import imgSelsPurification from '../merakya_sels_purification_1779243565328.png';
+import imgElixirEtoiles from '../merakya_elixir_etoiles_1779243585736.png';
+import imgCoffretLune from '../merakya_coffret_lune_1779243605101.png';
 
 import { Language, translations, PRODUCT_TRANSLATIONS, ARTICLE_TRANSLATIONS, REVIEW_TRANSLATIONS } from './translations';
 

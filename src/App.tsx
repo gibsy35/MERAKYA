@@ -9,6 +9,9 @@ import AdminPanel from './components/AdminPanel';
 import AuthGatewayModal from './components/AuthGatewayModal';
 import HelpAndInquiriesModal from './components/HelpAndInquiriesModal';
 import SpiritualLogo from './components/SpiritualLogo';
+import RitualReels from './components/RitualReels';
+import RitualQuiz from './components/RitualQuiz';
+import BotanicalGlossary from './components/BotanicalGlossary';
 import moroccanHeroBg from './assets/images/merakya_brand_hero_oriental_1779243623302.png';
 import imgAbondance from './assets/images/merakya_abondance_1779241793445.png';
 import imgRoseDamas from './assets/images/merakya_rose_damas_1779241813197.png';
@@ -189,7 +192,7 @@ export default function App() {
       const pendingStr = localStorage.getItem('merakya_pending_checkout');
       let customerDetails = {
         customerName: "Rituels de Lumière ✦",
-        customerEmail: "contact@merakya.com",
+        customerEmail: "contact@merakyalab.com",
         customerPhone: "+212 600-000000",
         customerAddress: "Livraison Nationale Spéciale"
       };
@@ -285,6 +288,25 @@ export default function App() {
       return [...prevCart, { product, quantity: 1 }];
     });
     // Open cart automatically to guide smooth checkout funnel
+    setIsCartOpen(true);
+  };
+
+  const handleAddMultipleToCart = (items: Product[]) => {
+    setCart((prevCart) => {
+      let tempCart = [...prevCart];
+      items.forEach((product) => {
+        const existingId = tempCart.findIndex((item) => item.product.id === product.id);
+        if (existingId > -1) {
+          tempCart[existingId] = {
+            ...tempCart[existingId],
+            quantity: tempCart[existingId].quantity + 1
+          };
+        } else {
+          tempCart.push({ product, quantity: 1 });
+        }
+      });
+      return tempCart;
+    });
     setIsCartOpen(true);
   };
 
@@ -725,6 +747,17 @@ export default function App() {
                       
                     </div>
                   </div>
+                </div>
+              </section>
+
+              {/* SHOWN CINEMATIC INSTAGRAM REELS */}
+              <section className="bg-white py-16 px-4 md:px-12 border-t border-[#E8DCC6]">
+                <div className="max-w-7xl mx-auto">
+                  <RitualReels 
+                    language={language}
+                    products={products}
+                    onAddToCart={handleAddToCart}
+                  />
                 </div>
               </section>
 
@@ -1381,6 +1414,26 @@ export default function App() {
 
                 </div>
 
+              </div>
+
+              {/* SECTION 2: THE SACRED INTERACTIVE DIAGNOSTIC */}
+              <div className="space-y-6 pt-12 border-t border-[#E8DCC6]/45">
+                <RitualQuiz 
+                  language={language}
+                  products={products}
+                  onAddMultipleToCart={handleAddMultipleToCart}
+                />
+              </div>
+
+              {/* SECTION 3: BOTANICAL HERBAL DICTIONARY GLOSSARY */}
+              <div className="space-y-6 pt-12 border-t border-[#E8DCC6]/45">
+                <BotanicalGlossary 
+                  language={language}
+                  products={products}
+                  onShowProduct={(prod) => {
+                    setSelectedProduct(prod);
+                  }}
+                />
               </div>
 
             </div>

@@ -120,7 +120,7 @@ export default function HelpAndInquiriesModal({
           <div className="border-t border-[#E8DCC6]/40 pt-4">
             <h4 className="font-semibold text-[#A67C52] text-[11px] md:text-xs tracking-wider uppercase mb-2">✦ COMMENT EFFECTUER UN RETOUR ?</h4>
             <p>
-              Il vous suffit d'envoyer un e-mail à l'adresse de notre conciergerie : <strong className="underline text-[#A67C52]">contact@merakya.com</strong>, en mentionnant votre nom et le numéro de votre commande. Notre équipe vous fera parvenir la procédure et l'adresse de réexpédition de nos ateliers sous 24h. Les frais de retour en cas de défaut ou d'erreur sur votre commande sont entièrement pris en charge par Merakya.
+              Il vous suffit d'envoyer un e-mail à l'adresse de notre conciergerie : <strong className="underline text-[#A67C52]">contact@merakyalab.com</strong>, en mentionnant votre nom et le numéro de votre commande. Notre équipe vous fera parvenir la procédure et l'adresse de réexpédition de nos ateliers sous 24h. Les frais de retour en cas de défaut ou d'erreur sur votre commande sont entièrement pris en charge par Merakya.
             </p>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function HelpAndInquiriesModal({
           <div className="border-t border-[#E8DCC6]/40 pt-4">
             <h4 className="font-semibold text-[#A67C52] text-[11px] md:text-xs tracking-wider uppercase mb-2">3. VOS DROITS D'ACCÈS ET DE RETRAIT</h4>
             <p>
-              Conformément à la protection internationale et marocaine des données personnelles, vous bénéficiez d'un droit permanent d'accès, d'interrogation, de rectification et d'effacement total de vos données personnelles. Vous pouvez exercer ce droit à tout instant par simple mail à <strong className="underline text-[#A67C52]">contact@merakya.com</strong>.
+              Conformément à la protection internationale et marocaine des données personnelles, vous bénéficiez d'un droit permanent d'accès, d'interrogation, de rectification et d'effacement total de vos données personnelles. Vous pouvez exercer ce droit à tout instant par simple mail à <strong className="underline text-[#A67C52]">contact@merakyalab.com</strong>.
             </p>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function HelpAndInquiriesModal({
           <div className="border-t border-[#E8DCC6]/40 pt-4">
             <h4 className="font-semibold text-[#A67C52] text-[11px] md:text-xs tracking-wider uppercase mb-2">✦ HOW TO INITIATE A RETURN?</h4>
             <p>
-              Simply email our concierge service at: <strong className="underline text-[#A67C52]">contact@merakya.com</strong> mentioning your full name and order number. Our team will supply the return label and address coordinates of our laboratory within 24h. Return shipping expenses under error or defects are fully covered by Merakya.
+              Simply email our concierge service at: <strong className="underline text-[#A67C52]">contact@merakyalab.com</strong> mentioning your full name and order number. Our team will supply the return label and address coordinates of our laboratory within 24h. Return shipping expenses under error or defects are fully covered by Merakya.
             </p>
           </div>
         </div>
@@ -358,7 +358,7 @@ export default function HelpAndInquiriesModal({
           <div className="border-t border-[#E8DCC6]/40 pt-4">
             <h4 className="font-semibold text-[#A67C52] text-[11px] md:text-xs tracking-wider uppercase mb-2">3. RIGHTS OF ACCESSIBILITY & REMOVAL</h4>
             <p>
-              Under global data protective laws, you hold a permanent right to access, check, correct, or request the immediate removal of all your records. Feel free to claim or apply this right anytime by emailing <strong className="underline text-[#A67C52]">contact@merakya.com</strong>.
+              Under global data protective laws, you hold a permanent right to access, check, correct, or request the immediate removal of all your records. Feel free to claim or apply this right anytime by emailing <strong className="underline text-[#A67C52]">contact@merakyalab.com</strong>.
             </p>
           </div>
         </div>
@@ -434,7 +434,7 @@ export default function HelpAndInquiriesModal({
 
               <div className="hidden md:block pt-8 border-t border-[#A67C52]/10 text-[9px] text-[#E8DCC6]/50 space-y-1">
                 <p>{language === 'EN' ? 'Need further assistance?' : "Besoin d'aide supplémentaire ?"}</p>
-                <p className="text-white hover:underline cursor-pointer font-medium">contact@merakya.com</p>
+                <p className="text-white hover:underline cursor-pointer font-medium">contact@merakyalab.com</p>
               </div>
             </div>
 

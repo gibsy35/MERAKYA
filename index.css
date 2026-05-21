@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Montserrat", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  
+  --color-brand-bg: #F7F2EB;
+  --color-brand-cream: #E8DCC6;
+  --color-brand-rose: #CB8892;
+  --color-brand-gold: #A67C52;
+  --color-brand-darkgold: #6B4E2E;
+  --color-brand-charcoal: #1E1A16;
+  --color-brand-accentgold: #D4AF37;
+}
+
+body {
+  background-color: #F7F2EB;
+  color: #1E1A16;
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbar to keep it highly premium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F7F2EB;
+}
+::-webkit-scrollbar-thumb {
+  background: #A67C52;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6B4E2E;
+}
+
+/* Custom animation durations */
+.animate-fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Elegant and smooth scrolling ticker style */
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-33.333%, 0, 0); }
+}
+
+.animate-ticker-slow {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker 30s linear infinite;
+}
+
+.animate-ticker-slow:hover {
+  animation-play-state: paused;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

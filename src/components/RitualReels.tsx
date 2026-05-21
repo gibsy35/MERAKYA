@@ -158,7 +158,7 @@ export default function RitualReels({ language, products, onAddToCart }: RitualR
                 setActiveReel(reel);
                 setIsPlaying(true);
               }}
-              className="group relative aspect-[9/16] rounded-md overflow-hidden bg-[#1E1A16] cursor-pointer shadow-md transition-all duration-500 hover:shadow-xl hover:-translate-y-1 border border-[#E8DCC6]/40 hover:border-[#A67C52]/60"
+              className="group relative aspect-[9/16] rounded-md overflow-hidden bg-[#1E1A16] cursor-pointer shadow-md transition-all duration-500 hover:shadow-xl hover:-translate-y-1"
             >
               {/* Fallback & Portrait Underlay: Beautiful high-definition product image */}
               {posterImage && (
@@ -201,9 +201,6 @@ export default function RitualReels({ language, products, onAddToCart }: RitualR
                   <Play className="h-4.5 w-4.5 text-[#E8DCC6] fill-current" />
                 </div>
               </div>
-
-              {/* Arched Border Overlay Inside */}
-              <div className="absolute inset-3 border border-[#E8DCC6]/25 rounded-xs pointer-events-none group-hover:border-[#A67C52]/50 transition-colors z-20" />
 
               {/* Instagram Emblem Tag */}
               <div className="absolute top-4 left-4 bg-black/65 backdrop-blur-md py-1 px-2.5 rounded-full text-[9px] text-[#E8DCC6] font-mono flex items-center gap-1.5 z-20 border border-[#E8DCC6]/10">

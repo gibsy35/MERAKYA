@@ -68,6 +68,16 @@ async function startServer() {
         finalPrompt = `An evocative and mystical alchemical product image of a ritual creation: "${promptText}". Beautiful composition showing glowing ritual beeswax or golden wax candle, surrounded by raw celestial quartz crystals, shiny amethyst shards, and intricate stargazing brass instruments in back. Ambient candle glow, deep mysterious charcoal background shadows, highly cinematic, magical atmosphere.`;
       } else if (style === "OASIS") {
         finalPrompt = `Organic product setup based on "${promptText}". Located in warm Moroccan sunlit desert clay stones with actual soft golden dunes background. Features high-quality cosmetics or hand-poured soap, accompanied by dry Sahara botanical leaves, twigs of fresh mint, earthy textures, dramatic direct sunlight shadows, breathtaking.`;
+      } else if (style === "MINIMALIST_ZEN") {
+        finalPrompt = `Wabi-sabi minimalist aesthetic raw photography of a natural brand product: "${promptText}". Displayed on pristine rough volcanic slate or light grey stone block, side light, soft leaves shadows, neutral warm gray background, calm, balanced, 8k, photorealistic.`;
+      } else if (style === "VINTAGE_HERBALIST") {
+        finalPrompt = `Rustic botanical apothecary vintage photography of a sacred creation: "${promptText}". Placed on a dark rustic textured oak wood table, surrounded by antique copper mortar, stacks of old mystical leather-bound books, hanging dried wildflower bundles, warm flickering candle lighting, moody fine art feel.`;
+      } else if (style === "ROYAL_HAMMAM") {
+        finalPrompt = `Fabulous premium Moroccan Hammam royal interior setup of: "${promptText}". Standing on a glowing wet white Carrara marble plinth, gold geometric brass bowls, warm steam vapor clouds, exotic door arc shadows, amber copper lanterns, high luxury elegant lifestyle.`;
+      } else if (style === "SACRED_LUNAR") {
+        finalPrompt = `Ethereal nocturnal celestial product photoshoot of: "${promptText}". Under a deep cosmic indigo night sky background lit by a glowing crescent silver moon beam, standing on a round metallic astrological plate, soft stardust mist, magic dream atmosphere.`;
+      } else if (style === "ATLAS_SUNSET") {
+        finalPrompt = `Deep evocative sunlit landscape photography of: "${promptText}". Placed on red earthen terracotta clay soil of the Atlas valleys, glowing direct hot golden hour sunset flares, long cinematic clay shadows, wild desert herbs, rich dry natural colors.`;
       } else {
         // Fallback elegant style
         finalPrompt = `Elegant studio shot of "${promptText}", luxurious feel, fine placement, soft premium lighting, highly detailed.`;

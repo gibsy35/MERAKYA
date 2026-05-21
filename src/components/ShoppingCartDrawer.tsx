@@ -38,6 +38,7 @@ export default function ShoppingCartDrawer({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('Casablanca');
+  const [country, setCountry] = useState('France');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successCode, setSuccessCode] = useState<string | null>(null);
 
@@ -55,6 +56,12 @@ export default function ShoppingCartDrawer({
   const [loginPassword, setLoginPassword] = useState('');
   const [isLoginView, setIsLoginView] = useState(false);
 
+  React.useEffect(() => {
+    if (selectedCurrency !== 'MAD' && paymentMethod === 'cod') {
+      setPaymentMethod('card');
+    }
+  }, [selectedCurrency, paymentMethod]);
+
   if (!isOpen) return null;
 
   const totalAmount = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -64,7 +71,9 @@ export default function ShoppingCartDrawer({
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !phone || !address) {
-      alert("Veuillez remplir toutes les informations pour la livraison au Maroc.");
+      alert(selectedCurrency === 'MAD' 
+        ? "Veuillez remplir toutes les informations pour la livraison au Maroc."
+        : (language === 'EN' ? "Please fill in all the shipping information." : "Veuillez remplir toutes les informations de livraison."));
       return;
     }
 
@@ -77,7 +86,7 @@ export default function ShoppingCartDrawer({
           customerName: name,
           customerEmail: email,
           customerPhone: phone,
-          customerAddress: `${address}, ${city}, Maroc`
+          customerAddress: `${address}, ${city}, ${selectedCurrency === 'MAD' ? 'Maroc' : country}`
         },
         cart: cart
       };
@@ -94,7 +103,7 @@ export default function ShoppingCartDrawer({
             customerEmail: email,
             customerName: name,
             customerPhone: phone,
-            customerAddress: `${address}, ${city}, Maroc`,
+            customerAddress: `${address}, ${city}, ${selectedCurrency === 'MAD' ? 'Maroc' : country}`,
             currency: selectedCurrency
           })
         });
@@ -130,7 +139,7 @@ export default function ShoppingCartDrawer({
         customerName: name,
         customerEmail: email,
         customerPhone: phone,
-        customerAddress: `${address}, ${city}, Maroc`
+        customerAddress: `${address}, ${city}, ${selectedCurrency === 'MAD' ? 'Maroc' : country}`
       });
 
       // Save clients account details if specified
@@ -240,14 +249,22 @@ export default function ShoppingCartDrawer({
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-700">
                 <ShieldCheck className="h-10 w-10" />
               </div>
-              <h3 className="font-serif text-2xl text-[#1E1A16] font-semibold">Commande validée d'exception !</h3>
+              <h3 className="font-serif text-2xl text-[#1E1A16] font-semibold">
+                {language === 'EN' ? "Order successfully verified!" : "Commande validée d'exception !"}
+              </h3>
               <p className="text-xs text-[#1E1A16]/80 leading-relaxed max-w-xs">
-                Merci d'avoir choisi l'alchimie Merakya. Votre commande a été transmise à notre atelier de Marrakech.
+                {language === 'EN' 
+                  ? "Thank you for choosing Merakya. Your ritual order is registered and being prepared with care in our Marrakech atelier."
+                  : "Merci d'avoir choisi l'alchimie Merakya. Votre commande a été transmise à notre atelier de Marrakech pour expédition."}
               </p>
               <div className="bg-[#1E1A16] text-[#F7F2EB] p-4 rounded-sm border border-[#A67C52]/20 w-full select-all font-mono text-xs">
-                Code de suivi : <strong className="text-[#E8DCC6]">{successCode}</strong>
+                {language === 'EN' ? "Tracking code:" : "Code de suivi :" } <strong className="text-[#E8DCC6]">{successCode}</strong>
               </div>
-              <p className="text-[10px] text-[#A67C52]">Paiement à la livraison partout au Maroc (Cash on Delivery)</p>
+              <p className="text-[10px] text-[#A67C52]">
+                {selectedCurrency === 'MAD'
+                  ? (language === 'EN' ? "Cash on Delivery (COD) across Morocco" : "Paiement à la livraison partout au Maroc (Cash on Delivery)")
+                  : (language === 'EN' ? "Secure Fast International Delivery" : "Expédition Express Internationale Sécurisée")}
+              </p>
               
               <button
                 id="btn-confirm-success"
@@ -365,13 +382,15 @@ export default function ShoppingCartDrawer({
 
                 <div>
                   <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
-                    Téléphone Portable * (Livraison au Maroc)
+                    {selectedCurrency === 'MAD' 
+                      ? "Téléphone Portable * (Livraison au Maroc)" 
+                      : (language === 'EN' ? "Phone Number *" : "Téléphone Portable *")}
                   </label>
                   <input 
                     type="tel" 
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Ex: +212 600 000000" 
+                    placeholder={selectedCurrency === 'MAD' ? "Ex: +212 600 000000" : "+33 6 0000 0000"} 
                     className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
                     required
                   />
@@ -379,36 +398,87 @@ export default function ShoppingCartDrawer({
 
                 <div>
                   <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
-                    Adresse de livraison complète *
+                    {language === 'EN' ? "Full Shipping Address *" : "Adresse de livraison complète *"}
                   </label>
                   <input 
                     type="text" 
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Rue, Quartier, Résidence" 
+                    placeholder={language === 'EN' ? "Street name, Apartment, Postal Code" : "Rue, Quartier, Code Postal, Résidence"} 
                     className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
-                    Ville de Livraison
-                  </label>
-                  <select 
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
-                  >
-                    <option value="Casablanca">Casablanca</option>
-                    <option value="Marrakech">Marrakech</option>
-                    <option value="Rabat">Rabat</option>
-                    <option value="Tanger">Tanger</option>
-                    <option value="Fès">Fès</option>
-                    <option value="Agadir">Agadir</option>
-                    <option value="Oujda">Oujda</option>
-                  </select>
-                </div>
+                {selectedCurrency !== 'MAD' ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
+                        {language === 'EN' ? "Country *" : "Pays de Livraison *"}
+                      </label>
+                      <select 
+                        value={country} 
+                        onChange={(e) => setCountry(e.target.value)}
+                        className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
+                      >
+                        <option value="France">France</option>
+                        <option value="Royaume-Uni">Royaume-Uni (UK)</option>
+                        <option value="Belgique">Belgique</option>
+                        <option value="Suisse">Suisse</option>
+                        <option value="Espagne">Espagne</option>
+                        <option value="Allemagne">Allemagne</option>
+                        <option value="États-Unis">États-Unis (USA)</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Autre">Autre International</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
+                        {language === 'EN' ? "City *" : "Ville *"}
+                      </label>
+                      <input 
+                        type="text" 
+                        value={city === 'Casablanca' || city === 'Marrakech' || city === 'Rabat' || city === 'Tanger' || city === 'Fès' || city === 'Agadir' || city === 'Oujda' ? '' : city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder={language === 'EN' ? "e.g., Paris, London" : "Ex: Paris, Lyon"}
+                        className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
+                        required
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
+                        Pays
+                      </label>
+                      <input 
+                        type="text" 
+                        value="Maroc" 
+                        disabled 
+                        className="w-full bg-gray-50 border border-[#E8DCC6] p-2.5 text-xs text-stone-500 focus:outline-none cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16] mb-1">
+                        {language === 'EN' ? "City *" : "Ville de Livraison *"}
+                      </label>
+                      <select 
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className="w-full bg-white border border-[#E8DCC6] p-2.5 text-xs text-[#1E1A16] focus:outline-none focus:border-[#A67C52]"
+                      >
+                        <option value="Casablanca">Casablanca</option>
+                        <option value="Marrakech">Marrakech</option>
+                        <option value="Rabat">Rabat</option>
+                        <option value="Tanger">Tanger</option>
+                        <option value="Fès">Fès</option>
+                        <option value="Agadir">Agadir</option>
+                        <option value="Oujda">Oujda</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 {/* Account Register Checkbox */}
                 {!isClientLoggedIn && (
@@ -442,47 +512,74 @@ export default function ShoppingCartDrawer({
                 {/* Highly structured, operational payment selection */}
                 <div className="space-y-2 pt-2">
                   <span className="block text-[10px] font-bold tracking-widest uppercase text-[#1E1A16]">
-                    Choisissez votre méthode de paiement *
+                    {language === 'EN' ? "CHOOSE PAYMENT METHOD *" : "Choisissez votre méthode de paiement *"}
                   </span>
                   
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('cod')}
-                      className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
-                        paymentMethod === 'cod' 
-                          ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
-                          : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
-                      }`}
-                    >
-                      À la Livraison
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('card')}
-                      className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
-                        paymentMethod === 'card' 
-                          ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
-                          : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
-                      }`}
-                    >
-                      Carte Bancaire
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('transfer')}
-                      className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
-                        paymentMethod === 'transfer' 
-                          ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
-                          : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
-                      }`}
-                    >
-                      RIB / Virement
-                    </button>
-                  </div>
+                  {selectedCurrency === 'MAD' ? (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
+                          paymentMethod === 'cod' 
+                            ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
+                            : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
+                        }`}
+                      >
+                        {language === 'EN' ? "On Delivery" : "À la Livraison"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
+                          paymentMethod === 'card' 
+                            ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
+                            : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
+                        }`}
+                      >
+                        {language === 'EN' ? "Credit Card" : "Carte Bancaire"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('transfer')}
+                        className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
+                          paymentMethod === 'transfer' 
+                            ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
+                            : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
+                        }`}
+                      >
+                        {language === 'EN' ? "Bank Transfer" : "RIB / Virement"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
+                          paymentMethod === 'card' 
+                            ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
+                            : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
+                        }`}
+                      >
+                        {language === 'EN' ? "Credit Card" : "Carte Bancaire"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('transfer')}
+                        className={`py-2 text-[9px] font-bold uppercase tracking-wider text-center border transition-all ${
+                          paymentMethod === 'transfer' 
+                            ? 'border-[#A67C52] bg-[#A67C52]/10 text-[#A67C52]' 
+                            : 'border-[#E8DCC6] bg-white text-[#1E1A16]/70 hover:border-[#1E1A16]'
+                        }`}
+                      >
+                        {language === 'EN' ? "Bank Wire" : "Virement SEPA/SWIFT"}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Payment sub-panels depending on status */}
-                  {paymentMethod === 'cod' && (
+                  {paymentMethod === 'cod' && selectedCurrency === 'MAD' && (
                     <div className="bg-[#E8DCC6]/20 p-3 rounded-xs text-[10.5px] text-[#A67C52] leading-normal border border-[#E8DCC6]/40">
                       <p><strong>✦ Espèces à la livraison (COD) :</strong> Payez en Dirhams lors de la réception de votre colis par notre transporteur partenaire AMANA / Catoni partout au Maroc.</p>
                     </div>
@@ -490,7 +587,9 @@ export default function ShoppingCartDrawer({
 
                   {paymentMethod === 'card' && (
                     <div className="bg-[#1E1A16] text-white p-3 rounded-xs border border-[#A67C52]/30 space-y-2.5">
-                      <p className="text-[10px] text-[#A67C52] font-bold uppercase tracking-wider">Passerelle de paiement sécurisée Merakya</p>
+                      <p className="text-[10px] text-[#A67C52] font-bold uppercase tracking-wider">
+                        {language === 'EN' ? "Secure Gateway (Stripe verified)" : "Passerelle de paiement sécurisée (Certifiée Stripe)"}
+                      </p>
                       
                       <div className="space-y-2">
                         <div>
@@ -498,7 +597,7 @@ export default function ShoppingCartDrawer({
                             type="text"
                             value={cardNumber}
                             onChange={(e) => setCardNumber(e.target.value.replace(/\D/gi, '').slice(0, 16))}
-                            placeholder="Numéro de carte (16 chiffres)"
+                            placeholder={language === 'EN' ? "Card Number (16 digits)" : "Numéro de carte (16 chiffres)"}
                             className="w-full bg-[#27231E] text-xs font-mono border border-[#A67C52]/20 p-2 text-white placeholder-gray-500 focus:outline-none"
                           />
                         </div>
@@ -514,7 +613,7 @@ export default function ShoppingCartDrawer({
                             type="password"
                             value={cardCvv}
                             onChange={(e) => setCardCvv(e.target.value.replace(/\D/gi, '').slice(0,3))}
-                            placeholder="CVV (3 chiffres)"
+                            placeholder="CVV"
                             className="w-full bg-[#27231E] text-xs font-mono border border-[#A67C52]/20 p-2 text-white placeholder-gray-500 focus:outline-none"
                           />
                         </div>
@@ -523,14 +622,29 @@ export default function ShoppingCartDrawer({
                   )}
 
                   {paymentMethod === 'transfer' && (
-                    <div className="bg-[#E8DCC6]/20 p-3 rounded-xs text-[10.5px] border border-[#E8DCC6]/50 space-y-1.5 text-[#1E1A16]/95">
-                      <p className="font-bold text-[#A67C52]">✦ Coordonnées bancaires pour le virement :</p>
-                      <p className="font-mono text-[10px] bg-white p-2 border border-[#E8DCC6] rounded-xs select-all">
-                        Banque: <strong>CIH Bank Marrakech</strong><br />
-                        Bénéficiaire: <strong>Merakya S.A.R.L.</strong><br />
-                        RIB: <strong>230 450 0981245678 0012 90</strong>
+                    <div className="bg-[#E8DCC6]/20 p-3 rounded-xs text-[10.5px] border border-[#E8DCC6]/50 space-y-1.5 text-[#1E1A16]/95 text-left">
+                      <p className="font-bold text-[#A67C52]">
+                        {language === 'EN' ? "✦ SWIFT / IBAN details for wire payment:" : "✦ Coordonnées bancaires pour le virement :"}
                       </p>
-                      <p className="text-[9.5px] text-[#6B4E2E]">Veuillez envoyer votre preuve de virement par WhatsApp au +212 661-000000 avec votre numéro de commande.</p>
+                      {selectedCurrency === 'MAD' ? (
+                        <p className="font-mono text-[10px] bg-white p-2 border border-[#E8DCC6] rounded-xs select-all text-left">
+                          Banque: <strong>CIH Bank Marrakech</strong><br />
+                          Bénéficiaire: <strong>Merakya S.A.R.L.</strong><br />
+                          RIB: <strong>230 450 0981245678 0012 90</strong>
+                        </p>
+                      ) : (
+                        <p className="font-mono text-[9px] bg-white p-2 border border-[#E8DCC6] rounded-xs select-all text-left leading-relaxed">
+                          Bank: <strong>BMCE Bank International (Europe/UK)</strong><br />
+                          Beneficiary: <strong>Merakya S.A.R.L.</strong><br />
+                          IBAN: <strong>MA64 0110 3000 2304 5009 8124 5678</strong><br />
+                          BIC / SWIFT: <strong>BMCE MAMC XX</strong>
+                        </p>
+                      )}
+                      <p className="text-[9.5px] text-[#6B4E2E] text-left">
+                        {language === 'EN' 
+                          ? "Please send your wire receipt to contact@merakyalab.com or WhatsApp +212 661-000000 including your order tracking number."
+                          : "Veuillez envoyer votre preuve de virement par WhatsApp au +212 661-000000 ou par mail à contact@merakyalab.com avec votre numéro de commande."}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -611,7 +725,7 @@ export default function ShoppingCartDrawer({
                           <img 
                             src={item.product.image} 
                             alt={name} 
-                            className="w-16 h-16 rounded-xs object-cover border border-[#E8DCC6]"
+                            className="w-16 h-16 rounded-xs object-cover"
                             referrerPolicy="no-referrer"
                           />
                           

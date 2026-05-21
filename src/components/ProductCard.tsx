@@ -39,7 +39,7 @@ export default function ProductCard({
   return (
     <div 
       id={`product-card-${product.id}`}
-      className="group bg-white border border-[#E8DCC6] p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-lg rounded-sm hover:-translate-y-1"
+      className="group bg-white p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-xl rounded-sm hover:-translate-y-1"
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F7F2EB] rounded-xs mb-4">
         {/* Product image */}

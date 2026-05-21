@@ -77,6 +77,12 @@ export default function Navbar({
             EUR
           </button>
           <button 
+            onClick={() => onChangeCurrency('GBP')} 
+            className={`transition-colors py-0.5 hover:text-white ${selectedCurrency === 'GBP' ? 'text-white border-b border-[#A67C52] font-extrabold' : 'opacity-60 font-medium'}`}
+          >
+            GBP
+          </button>
+          <button 
             onClick={() => onChangeCurrency('USD')} 
             className={`transition-colors py-0.5 hover:text-white ${selectedCurrency === 'USD' ? 'text-white border-b border-[#A67C52] font-extrabold' : 'opacity-60 font-medium'}`}
           >

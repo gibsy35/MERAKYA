@@ -27,7 +27,7 @@ import { Language, translations, PRODUCT_TRANSLATIONS, ARTICLE_TRANSLATIONS, REV
 import { 
   Sparkles, Compass, Leaf, Heart, Sun, ArrowRight, 
   MapPin, CheckCircle, CreditCard, Box, Gift, Headphones,
-  Mail, Calendar, Lock, Instagram, Facebook, Share2, Twitter, Link, Check
+  Mail, Calendar, Lock, Instagram, Facebook, Share2, Twitter, Link, Check, X
 } from 'lucide-react';
 
 export default function App() {
@@ -62,7 +62,17 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   
   // Custom states matching user's multi-currency & client register requests
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('MAD');
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(() => {
+    const saved = localStorage.getItem('merakya_currency');
+    return (saved as CurrencyCode) || 'MAD';
+  });
+
+  const [detectionFeedback, setDetectionFeedback] = useState<{ country: string; currency: CurrencyCode } | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('merakya_currency', selectedCurrency);
+  }, [selectedCurrency]);
+
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem('merakya_language');
     return (saved as Language) || 'FR';
@@ -70,6 +80,77 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('merakya_language', language);
+  }, [language]);
+
+  // Dynamic Geo Location detector matching European & UK security/payment compliance
+  useEffect(() => {
+    const detectLocation = async () => {
+      const alreadyDetected = sessionStorage.getItem('merakya_currency_detected');
+      if (alreadyDetected) return;
+
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          const countryCode = data.country_code; // 'FR', 'GB', 'MA', 'US'
+          const countryName = data.country_name; 
+          
+          let matched: CurrencyCode = 'USD';
+          if (countryCode === 'MA') {
+            matched = 'MAD';
+          } else if (countryCode === 'GB') {
+            matched = 'GBP';
+          } else if (['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'IE', 'LU', 'GR', 'FI'].includes(countryCode)) {
+            matched = 'EUR';
+          }
+          
+          setSelectedCurrency(matched);
+          sessionStorage.setItem('merakya_currency_detected', 'true');
+          setDetectionFeedback({
+            country: countryName || (language === 'EN' ? 'your location' : 'votre localisation'),
+            currency: matched
+          });
+        } else {
+          throw new Error('Fallback logic');
+        }
+      } catch (err) {
+        // Fallback to Instant timezone and language settings
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        let matched: CurrencyCode = "USD";
+        let countryText = "International";
+        
+        if (tz.includes("Casablanca") || tz.includes("Africa/Casablanca")) {
+          matched = "MAD";
+          countryText = language === 'EN' ? "Morocco" : "Maroc";
+        } else if (tz.includes("London") || tz.includes("Europe/London") || tz.includes("Belfast")) {
+          matched = "GBP";
+          countryText = language === 'EN' ? "United Kingdom" : "Royaume-Uni";
+        } else if (
+          tz.includes("Paris") || tz.includes("Europe/Paris") ||
+          tz.includes("Berlin") || tz.includes("Rome") ||
+          tz.includes("Madrid") || tz.includes("Brussels") ||
+          tz.includes("Amsterdam") || tz.includes("Europe")
+        ) {
+          matched = "EUR";
+          countryText = language === 'EN' ? "Europe / France" : "Europe / France";
+        } else {
+          const userLang = navigator.language || "";
+          if (userLang.startsWith("fr") && !tz.includes("America")) {
+            matched = "EUR";
+            countryText = "Europe";
+          }
+        }
+        
+        setSelectedCurrency(matched);
+        sessionStorage.setItem('merakya_currency_detected', 'true');
+        setDetectionFeedback({
+          country: countryText,
+          currency: matched
+        });
+      }
+    };
+
+    detectLocation();
   }, [language]);
 
   // Translation helper function
@@ -608,7 +689,7 @@ export default function App() {
                         setCurrentView('boutique');
                         window.scrollTo({ top: 300, behavior: 'smooth' });
                       }}
-                      className="group relative aspect-[3/4] overflow-hidden rounded-xs cursor-pointer shadow-md border border-[#E8DCC6] transition-all duration-500 hover:border-[#A67C52] hover:shadow-[0_10px_30px_rgba(166,124,82,0.25)] hover:-translate-y-1"
+                      className="group relative aspect-[3/4] overflow-hidden rounded-xs cursor-pointer shadow-md transition-all duration-500 hover:shadow-[0_10px_30px_rgba(166,124,82,0.25)] hover:-translate-y-1"
                     >
                       <img 
                         src={cat.img} 
@@ -620,8 +701,8 @@ export default function App() {
                       {/* Rich amber-dark filter layer overlay */}
                       <div className="absolute inset-0 bg-[#1E1A16]/50 group-hover:bg-[#1E1A16]/65 transition-all duration-500" />
                       
-                      {/* Fine gold-accented frame border layout inside the card */}
-                      <div className="absolute inset-3.5 border border-[#E8DCC6]/25 group-hover:border-[#A67C52]/50 transition-colors duration-500 flex flex-col justify-end p-4 text-center items-center">
+                      {/* Seamless layout inside the card (no borders/frames) */}
+                      <div className="absolute inset-3.5 flex flex-col justify-end p-4 text-center items-center">
                         <span className="text-[8px] text-[#E8DCC6]/80 tracking-[0.2em] uppercase block mb-1">{cat.desc}</span>
                         <h3 className="font-serif text-xs sm:text-sm text-white tracking-widest leading-snug font-medium uppercase group-hover:text-[#E8DCC6] transition-colors">
                           {cat.name}
@@ -684,14 +765,10 @@ export default function App() {
 
                   {/* Right Arched doorway elements & decorative geometry layout */}
                   <div className="lg:col-span-7 relative">
-                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-xl border border-[#A67C52]/20 bg-[#1E1A16]/80 backdrop-blur-md p-8 flex flex-col justify-center items-center text-center">
+                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-xl bg-[#1E1A16]/80 backdrop-blur-md p-8 flex flex-col justify-center items-center text-center">
                       
                       {/* Subtly animated background glow */}
                       <div className="absolute inset-0 bg-radial from-[#3D2C1E]/60 via-[#1E1A16]/70 to-[#1E1A16]/80 opacity-75" />
-                      
-                      {/* Fine geometric Zellij layout background patterns */}
-                      <div className="absolute inset-5 border border-[#A67C52]/20 rounded-xs pointer-events-none" />
-                      <div className="absolute inset-7 border border-[#A67C52]/10 rounded-xs pointer-events-none" />
 
                       {/* Giant Interactive Golden Star Mandala */}
                       <div className="relative w-44 h-44 sm:w-56 sm:h-56 opacity-85 select-none pointer-events-none mb-4 flex items-center justify-center">
@@ -937,6 +1014,40 @@ export default function App() {
                 </div>
               )}
 
+              {/* Coming Soon Alchemical Announcement Banner */}
+              <div className="relative rounded-sm overflow-hidden border border-[#A67C52]/30 bg-gradient-to-r from-[#1E1A16] to-[#2D2620] text-white p-8 md:p-10 shadow-lg text-center space-y-4 max-w-4xl mx-auto mt-16">
+                <div className="absolute inset-0 bg-radial from-[#3D2C1E]/30 to-[#1E1A16]/50 opacity-80 pointer-events-none" />
+                
+                {/* Gold floral decorative element of stars */}
+                <div className="relative z-10 flex flex-col items-center justify-center space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="w-8 h-[1px] bg-[#A67C52]/50" />
+                    <Sparkles className="h-5 w-5 text-[#A67C52] animate-pulse" />
+                    <div className="w-8 h-[1px] bg-[#A67C52]/50" />
+                  </div>
+                  
+                  <span className="text-[10px] md:text-xs tracking-[0.3em] font-extrabold text-[#A67C52] uppercase block font-sans">
+                    {language === 'EN' ? "✦ ATELIER DE MATURATION ✦" : "✦ PROCHAINEMENT DANS L'ATELIER ✦"}
+                  </span>
+                  
+                  <h3 className="font-serif text-xl md:text-2xl text-white font-normal tracking-wide uppercase leading-tight">
+                    {language === 'EN' ? "Future Whispers: Sacred Hair & Skin Care" : "Prochainement : Éveil des Soins Visage & Cheveux"}
+                  </h3>
+                  
+                  <p className="text-xs md:text-sm text-[#E8DCC6]/85 font-sans leading-relaxed max-w-2xl font-light italic">
+                    {language === 'EN'
+                      ? "New botanical alignments and alchemical elixirs are currently maturing in our workshop under solar cycles. Very soon, our range will expand with high-vibe hair systems and organic face skin care to honor your outer temple."
+                      : "De nouvelles formules d'onction et précieux élixirs végétaux sont actuellement en cours de maturation solaire dans nos ateliers. Très prochainement, nos différentes gammes seront enrichies par des rituels de soin holistiques d'exception pour les cheveux et la peau."}
+                  </p>
+                  
+                  <div className="pt-2">
+                    <span className="inline-block border border-[#A67C52]/30 bg-[#A67C52]/10 px-4 py-1.5 text-[9px] uppercase font-bold tracking-widest text-[#E8DCC6] rounded-full">
+                      {language === 'EN' ? "ALCHEMICAL MATURATION IN PROGRESS" : "ALCHIMIE EN COURS DE PRÉPARATION ✦"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -965,10 +1076,10 @@ export default function App() {
               </div>
 
               {/* SECTION 1: INTERACTIVE PARCOURS SACRÉS */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
                 
                 {/* Left Side: Journeys tabs & Detail Panel */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-3 space-y-6">
                   <h3 className="font-serif text-[#1E1A16] text-lg font-medium flex items-center gap-2">
                     <Compass className="h-5 w-5 text-[#A67C52]" />
                     {language === 'EN' ? "1. Select your Alchemical Pathway" : "1. Choisissez votre Parcours Alchimique"}
@@ -1218,60 +1329,60 @@ export default function App() {
                 </div>
 
                 {/* Right Side: Quick Stateful Interactive Modules */}
-                <div className="space-y-8">
+                <div className="lg:col-span-2 space-y-8">
                   
                   {/* MODULE A: INTERACTIVE BREATH PACING HARMONIZER */}
-                  <div className="bg-[#1E1A16] text-[#F7F2EB] p-6 rounded-sm border border-[#A67C52]/30 space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-widest font-extrabold text-[#A67C52] block font-mono">✦ MYSTICAL PACING</span>
-                      <h4 className="font-serif text-base font-normal tracking-wide text-white">
+                  <div className="bg-[#1E1A16] text-[#F7F2EB] p-8 md:p-10 rounded-sm border border-[#A67C52]/30 space-y-5 shadow-2xl">
+                    <div className="space-y-1.5 border-b border-[#A67C52]/25 pb-3">
+                      <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#A67C52] block font-mono">✦ MYSTICAL PACING</span>
+                      <h4 className="font-serif text-lg font-normal tracking-wide text-white">
                         {language === 'EN' ? "Sacred Breathing Harmonizer" : "Harmonisation Respiratoire"}
                       </h4>
-                      <p className="text-[10px] text-[#E8DCC6]/70 font-sans leading-relaxed">
+                      <p className="text-[11.5px] text-[#E8DCC6]/85 font-sans leading-relaxed font-light">
                         {language === 'EN'
                           ? "Align your cognitive cells and dissolve stress circles with our rhythmic 4-7-8 alchemical respirator box."
                           : "Alignez vos vibrations émotionnelles et évacuez les surcharges avec notre guide d'onction inspire 4-7-8."}
                       </p>
                     </div>
-
+ 
                     {/* Animated Visual Core Sphere */}
-                    <div className="flex flex-col items-center justify-center py-4">
-                      <div className="relative flex items-center justify-center h-28 w-44">
+                    <div className="flex flex-col items-center justify-center py-6">
+                      <div className="relative flex items-center justify-center h-36 w-52">
                         
                         {/* Animated Glowing Halos */}
                         <div 
                           className={`absolute rounded-full bg-[#A67C52]/10 border border-[#A67C52]/30 transition-all duration-1000 ${
-                            !isBreathingActive ? 'w-20 h-20' : 
-                            breathingPhase === 'Inhale' ? 'w-28 h-28 scale-110 opacity-100' :
-                            breathingPhase === 'Hold' ? 'w-28 h-28 scale-110 opacity-75 bg-amber-500/5 border-amber-400' :
-                            'w-16 h-16 scale-95 opacity-50'
+                            !isBreathingActive ? 'w-24 h-24' : 
+                            breathingPhase === 'Inhale' ? 'w-36 h-36 scale-110 opacity-100' :
+                            breathingPhase === 'Hold' ? 'w-36 h-36 scale-110 opacity-75 bg-amber-500/5 border-amber-400' :
+                            'w-20 h-20 scale-95 opacity-50'
                           }`}
                         />
                         
                         {/* Core circle */}
                         <div 
-                          className={`w-14 h-14 rounded-full bg-[#A67C52] shadow-lg flex flex-col items-center justify-center z-10 transition-all duration-1000 ${
+                          className={`w-18 h-18 rounded-full bg-[#A67C52] shadow-xl flex flex-col items-center justify-center z-10 transition-all duration-1000 ${
                             isBreathingActive && breathingPhase === 'Hold' ? 'bg-amber-600 scale-105' : ''
                           }`}
                         >
                           {isBreathingActive ? (
-                            <span className="font-serif text-sm text-white font-bold">{breathingSec}s</span>
+                            <span className="font-serif text-base text-white font-bold">{breathingSec}s</span>
                           ) : (
-                            <Sparkles className="h-4.5 w-4.5 text-white" />
+                            <Sparkles className="h-5 w-5 text-white" />
                           )}
                         </div>
                       </div>
-
+ 
                       {/* Display Texts */}
-                      <div className="mt-2 text-center space-y-1 z-10">
+                      <div className="mt-4 text-center space-y-1.5 z-10">
                         {isBreathingActive ? (
                           <>
-                            <span className="text-xs uppercase font-extrabold tracking-[0.2em] text-[#A67C52] block">
+                            <span className="text-xs sm:text-sm uppercase font-extrabold tracking-[0.2em] text-[#A67C52] block">
                               {breathingPhase === 'Inhale' ? (language === 'EN' ? "INSPIRE (IN) • 4s" : "INSPIRER (IN) • 4s") :
                                breathingPhase === 'Hold' ? (language === 'EN' ? "RETAIN (HOLD) • 7s" : "RETENIR (HOLD) • 7s") :
                                (language === 'EN' ? "EXHALE (OUT) • 8s" : "EXPIRER (OUT) • 8s")}
                             </span>
-                            <span className="text-[9px] text-[#E8DCC6]/60 font-light block italic h-5">
+                            <span className="text-[10px] text-[#E8DCC6]/75 font-light block italic h-5">
                               {breathingPhase === 'Inhale' ? (language === 'EN' ? "Swell your chest with cosmic energy" : "Prenez l'air de manière fluide") :
                                breathingPhase === 'Hold' ? (language === 'EN' ? "Store the beneficial botanical ions" : "Retenez l'air pour infuser") :
                                (language === 'EN' ? "Let all residual stress dissolve" : "Expulsez toute charge lourde")}
@@ -1279,21 +1390,21 @@ export default function App() {
                           </>
                         ) : (
                           <>
-                            <span className="text-xs uppercase font-semibold text-white tracking-widest block">
+                            <span className="text-xs sm:text-sm uppercase font-semibold text-white tracking-widest block">
                               {language === 'EN' ? "Pacing Box Idle" : "Pulsateur inactif"}
                             </span>
-                            <span className="text-[9px] text-[#E8DCC6]/60 block font-light">
+                            <span className="text-[10px] text-[#E8DCC6]/60 block font-light">
                               {language === 'EN' ? "Click initiates 4-7-8 loop" : "Cliquez pour initier la boucle 4-7-8"}
                             </span>
                           </>
                         )}
                       </div>
                     </div>
-
+ 
                     {/* Operational action button */}
                     <button
                       onClick={() => setIsBreathingActive(!isBreathingActive)}
-                      className="w-full bg-[#A67C52] hover:bg-[#A67C52]/90 text-white text-[10px] uppercase font-bold tracking-widest py-2.5 rounded-xs transition-colors block text-center"
+                      className="w-full bg-[#A67C52] hover:bg-[#A67C52]/90 text-white text-[11px] uppercase font-bold tracking-widest py-3 rounded-xs transition-colors block text-center shadow-md active:scale-98"
                     >
                       {isBreathingActive 
                         ? (language === 'EN' ? "✦ HALT PRACTICE" : "✦ ARRETER L'EXERCICE") 
@@ -1302,13 +1413,13 @@ export default function App() {
                   </div>
 
                   {/* MODULE B: INTENTION ORACLE (TIRER UNE CARTE DAILY RITUAL) */}
-                  <div className="bg-[#E8DCC6]/30 border border-[#E8DCC6] p-6 rounded-sm space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-widest font-extrabold text-[#A67C52] block">✦ CELestial tarot</span>
-                      <h4 className="font-serif text-base text-[#1E1A16] font-normal leading-tight">
+                  <div className="bg-[#E8DCC6]/30 border border-[#E8DCC6] p-8 md:p-10 rounded-sm space-y-5 shadow-sm">
+                    <div className="space-y-1.5 border-b border-[#E8DCC6] pb-3">
+                      <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#A67C52] block font-mono">✦ CELESTIAL TAROT</span>
+                      <h4 className="font-serif text-lg text-[#1E1A16] font-normal leading-tight">
                         {language === 'EN' ? "The Thought Oracle" : "L'Oracle de la Pensée"}
                       </h4>
-                      <p className="text-[10px] text-gray-500 font-sans leading-relaxed">
+                      <p className="text-[11.5px] text-gray-600 font-sans leading-relaxed font-light">
                         {language === 'EN'
                           ? "Inquire the ether forces. Draw your positive celestial guidance and crystal pairings of the day."
                           : "Consultez les ondes célestes. Tirez une carte d'ancrage sacrée pour harmoniser votre journée."}
@@ -1316,25 +1427,25 @@ export default function App() {
                     </div>
 
                     {/* Flipping oracle card container */}
-                    <div className="flex justify-center py-2 h-44 select-none">
+                    <div className="flex justify-center py-4 h-56 select-none">
                       {activeOracleCard ? (
                         /* Drawn Card */
                         <div 
-                          className={`w-full max-w-[200px] bg-white border border-[#A67C52]/50 p-3 rounded-md shadow-lg flex flex-col justify-between text-center transition-all ${activeOracleCard.color}`}
+                          className={`w-full max-w-[240px] bg-white border border-[#A67C52]/50 p-4.5 rounded-md shadow-xl flex flex-col justify-between text-center transition-all ${activeOracleCard.color}`}
                         >
-                          <span className="text-[8px] tracking-widest font-extrabold text-[#A67C52] uppercase block">✦ {language === 'EN' ? "THOUGHT" : "PENSÉE"} ✦</span>
+                          <span className="text-[9px] tracking-widest font-extrabold text-[#A67C52] uppercase block font-mono">✦ {language === 'EN' ? "THOUGHT" : "PENSÉE"} ✦</span>
                           
-                          <div className="space-y-1 my-1">
-                            <h5 className="font-serif font-bold text-[11px] text-[#1E1A16] uppercase tracking-wide">
+                          <div className="space-y-1.5 my-2">
+                            <h5 className="font-serif font-bold text-xs md:text-[13px] text-[#1E1A16] uppercase tracking-wide">
                               {language === 'EN' ? activeOracleCard.titleEn : activeOracleCard.titleFr}
                             </h5>
-                            <p className="text-[9.5px] text-gray-600 leading-normal italic font-light">
+                            <p className="text-[10.5px] text-gray-600 leading-relaxed italic font-light">
                               "{language === 'EN' ? activeOracleCard.descEn : activeOracleCard.descFr}"
                             </p>
                           </div>
 
-                          <div className="border-t border-[#E8DCC6]/60 pt-1.5 text-[9px] font-mono text-[#A67C52] flex flex-col">
-                            <span className="uppercase font-bold tracking-wider text-[8px]">{language === 'EN' ? "RECOMMENDED GEMSTONE:" : "CRISTAL D'ALIGNEMENT :"}</span>
+                          <div className="border-t border-[#E8DCC6]/60 pt-2 text-[10px] font-mono text-[#A67C52] flex flex-col">
+                            <span className="uppercase font-bold tracking-wider text-[8.5px]">{language === 'EN' ? "RECOMMENDED GEMSTONE:" : "CRISTAL D'ALIGNEMENT :"}</span>
                             <span className="text-[#1E1A16] font-sans font-semibold mt-0.5">{language === 'EN' ? activeOracleCard.gemEn : activeOracleCard.gemFr}</span>
                           </div>
                         </div>
@@ -1387,12 +1498,12 @@ export default function App() {
                             const random = cards[Math.floor(Math.random() * cards.length)];
                             setActiveOracleCard(random);
                           }}
-                          className="w-full max-w-[120px] bg-[#1E1A16] border border-[#A67C52] rounded-md shadow-md hover:border-[#F7F2EB] flex flex-col justify-between text-center p-3 text-[#F7F2EB] hover:scale-105 transition-all group cursor-pointer"
+                          className="w-full max-w-[140px] bg-[#1E1A16] border border-[#A67C52] rounded-md shadow-lg hover:border-[#F7F2EB] flex flex-col justify-between text-center p-4 text-[#F7F2EB] hover:scale-105 transition-all group cursor-pointer h-48"
                         >
-                          <div className="w-full h-full border border-[#A67C52]/40 rounded-sm p-1.5 flex flex-col justify-between items-center bg-[radial-gradient(ellipse_at_center,rgba(166,124,82,0.1)_0%,rgba(0,0,0,0)_80%)]">
-                            <span className="text-[7px] tracking-widest text-[#A67C52] block uppercase">✦ MERAKYA ✦</span>
-                            <Compass className="h-5 w-5 text-[#A67C52] group-hover:rotate-180 transition-transform duration-700" />
-                            <span className="text-[8px] uppercase tracking-wider text-[#A67C52] block group-hover:text-white transition-colors">
+                          <div className="w-full h-full border border-[#A67C52]/40 rounded-sm p-2 flex flex-col justify-between items-center bg-[radial-gradient(ellipse_at_center,rgba(166,124,82,0.1)_0%,rgba(0,0,0,0)_80%)]">
+                            <span className="text-[7px] tracking-widest text-[#A67C52] block uppercase font-mono">✦ MERAKYA ✦</span>
+                            <Compass className="h-6 w-6 text-[#A67C52] group-hover:rotate-180 transition-transform duration-700" />
+                            <span className="text-[8.5px] uppercase tracking-wider text-[#A67C52] block group-hover:text-white transition-colors">
                               {language === 'EN' ? "DRAW AN INTENTION" : "TIRER UNE CARTE"}
                             </span>
                           </div>
@@ -1404,7 +1515,7 @@ export default function App() {
                     {activeOracleCard && (
                       <button
                         onClick={() => setActiveOracleCard(null)}
-                        className="text-[9px] uppercase font-bold tracking-widest text-[#A67C52] hover:text-[#1E1A16] underline block mx-auto text-center"
+                        className="text-[10px] uppercase font-bold tracking-widest text-[#A67C52] hover:text-[#1E1A16] underline block mx-auto text-center font-sans"
                       >
                         {language === 'EN' ? "Draw another thought ✦" : "Tirer une autre pensée ✦"}
                       </button>
@@ -1885,7 +1996,7 @@ export default function App() {
                 </div>
                 
                 {/* Beautiful luxury visual of our actual candle, perfectly matching screenshot #5 */}
-                <div className="relative rounded-sm overflow-hidden aspect-[4/5] shadow-xl border border-[#E8DCC6] bg-stone-50">
+                <div className="relative rounded-sm overflow-hidden aspect-[4/5] shadow-xl bg-stone-50">
                   <img 
                     src={imgAbondance} 
                     alt="Bougie d'abondance Merakya dans son écrin" 
@@ -2070,12 +2181,14 @@ export default function App() {
               { 
                 icon: MapPin, 
                 text: language === 'EN' ? "FAST COURIER" : "LIVRAISON RAPIDE", 
-                sub: language === 'EN' ? "Across Morocco & World" : "Partout au Maroc" 
+                sub: language === 'EN' ? "Across Morocco & International" : "Partout au Maroc & à l'International" 
               },
               { 
                 icon: CreditCard, 
                 text: language === 'EN' ? "SECURE PAYMENT" : "PAIEMENT SÉCURISÉ", 
-                sub: language === 'EN' ? "100% Safe / Cash on Delivery" : "100% sécurisé / Cash" 
+                sub: selectedCurrency === 'MAD' 
+                  ? (language === 'EN' ? "100% Secured / Cash / Card" : "100% sécurisé / COD / Carte") 
+                  : (language === 'EN' ? "Secure Card Processing / Wire" : "Paiement CB Sécurisé / Virement") 
               },
               { 
                 icon: Box, 
@@ -2213,6 +2326,39 @@ export default function App() {
         initialTab={activeInquirySection || 'livraison'}
         language={language}
       />
+
+      {/* SECURE GEOLOCALIZED CURRENCY DETECTED TOAST */}
+      {detectionFeedback && (
+        <div id="toast-geo-currency" className="fixed bottom-6 right-6 z-[9999] max-w-sm bg-[#1E1A16] border border-[#A67C52]/50 text-[#F7F2EB] p-4 rounded-sm shadow-2xl transition-all animate-fade-in flex items-start gap-3">
+          <div className="p-2 bg-[#A67C52]/10 rounded-full border border-[#A67C52]/20 text-[#A67C52] shrink-0">
+            <MapPin className="h-4 w-4 animate-bounce" />
+          </div>
+          <div className="flex-1 min-w-0 font-sans text-left">
+            <h5 className="font-bold text-[10px] tracking-widest text-[#A67C52] uppercase flex items-center gap-1.5">
+              <span>✦ LOCALISATION VÉRIFIÉE</span>
+            </h5>
+            <p className="text-[11px] text-[#E8DCC6]/90 mt-1 leading-normal">
+              {language === 'EN' 
+                ? `Connection recognized from ${detectionFeedback.country}. Native checkout converted automatically to ${detectionFeedback.currency} for your absolute security.`
+                : `Visiteur identifié depuis : ${detectionFeedback.country}. Devise de paiement configurée automatiquement en ${detectionFeedback.currency} pour éliminer tout risque d'anomalie.`}
+            </p>
+            <button 
+              id="confirm-geo-currency"
+              onClick={() => setDetectionFeedback(null)} 
+              className="mt-2.5 text-[9px] font-extrabold uppercase tracking-widest text-[#A67C52] hover:text-[#E8DCC6] transition-colors cursor-pointer block"
+            >
+              {language === 'EN' ? "CONFIRM" : "COMPRIS ✦"}
+            </button>
+          </div>
+          <button 
+            id="close-geo-currency"
+            onClick={() => setDetectionFeedback(null)} 
+            className="text-[#E8DCC6]/40 hover:text-white transition-colors p-1"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
     </div>
   );

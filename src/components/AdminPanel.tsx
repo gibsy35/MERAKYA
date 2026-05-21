@@ -151,7 +151,8 @@ export default function AdminPanel({
   // AI Visual Generator States
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [visualPrompt, setVisualPrompt] = useState('');
-  const [visualStyle, setVisualStyle] = useState('STUDIO_PREMIUM'); // 'STUDIO_PREMIUM', 'COSMIC', 'OASIS'
+  const [visualStyle, setVisualStyle] = useState('STUDIO_PREMIUM'); // 'STUDIO_PREMIUM', 'COSMIC', 'OASIS', 'MINIMALIST_ZEN', etc.
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
 
   // Edit Price State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -271,9 +272,21 @@ export default function AdminPanel({
 
       if (response.ok && data.imageUrl) {
         setImageUrl(data.imageUrl);
+        setGeneratedImages(prev => Array.from(new Set([data.imageUrl, ...prev])));
+        const styleNameMap: Record<string, { en: string; fr: string }> = {
+          STUDIO_PREMIUM: { en: "Studio Premium", fr: "Studio Premium ✦" },
+          COSMIC: { en: "Mystical Light", fr: "Inspiration Alchimique ✦" },
+          OASIS: { en: "Desert Oasis", fr: "Oasis du Sud ✦" },
+          MINIMALIST_ZEN: { en: "Minimalist Zen", fr: "Épuré & Zen (Wabi-Sabi) ✦" },
+          VINTAGE_HERBALIST: { en: "Ancestral Apothecary", fr: "Apothicaire Ancestrale (Vintage) ✦" },
+          ROYAL_HAMMAM: { en: "Royal Hammam", fr: "Bain Impérial & Hammam Royal ✦" },
+          SACRED_LUNAR: { en: "Sacred Lunar", fr: "Nuit Céleste & Astrologie ✦" },
+          ATLAS_SUNSET: { en: "Atlas Sunset", fr: "Crépuscule d'Ambre & Terre Rouge ✦" }
+        };
+        const currentLabel = styleNameMap[visualStyle] || { en: visualStyle, fr: visualStyle };
         displayNotification(`🎨 ` + (language === 'EN'
-          ? `Alchemical visual crafted by Gemini in style "${visualStyle === 'STUDIO_PREMIUM' ? 'Studio Premium ✦' : visualStyle === 'COSMIC' ? 'Mystical Light ✦' : 'Desert Oasis ✦'}" !`
-          : `Visuel sacré incarné via Gemini en style "${visualStyle === 'STUDIO_PREMIUM' ? 'Studio Premium ✦' : visualStyle === 'COSMIC' ? 'Inspiration Alchimique ✦' : 'Oasis du Sud ✦'}" !`));
+          ? `Alchemical visual crafted by Gemini in style "${currentLabel.en} ✦" !`
+          : `Visuel sacré incarné via Gemini en style "${currentLabel.fr}" !`));
       } else {
         throw new Error(data.error || "Génération échouée");
       }
@@ -321,6 +334,7 @@ export default function AdminPanel({
       }
       
       setImageUrl(matchedUrl);
+      setGeneratedImages(prev => Array.from(new Set([matchedUrl, ...prev])));
       
       const isApiKeyError = err.message && (err.message.includes("GEMINI_API_KEY") || err.message.includes("missing") || err.message.includes("key"));
       if (isApiKeyError) {
@@ -682,6 +696,12 @@ export default function AdminPanel({
                     <option key={index} value={preset.url}>{preset.name}</option>
                   ))}
                   <option value="https://images.unsplash.com/photo-1596435764243-61b1f0d409b8?auto=format&fit=crop&q=80&w=600">Autre Flacon Envoûtant</option>
+                  {/* Generated Images dynamically kept in dropdown */}
+                  {generatedImages.map((genUrl, index) => (
+                    <option key={`gen-opt-${index}`} value={genUrl}>
+                      🔮 Visuel IA Généré #{generatedImages.length - index}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -810,8 +830,13 @@ export default function AdminPanel({
                     className="w-full bg-[#27231E] text-white text-xs border border-[#A67C52]/20 p-2 focus:outline-none focus:border-[#A67C52]"
                   >
                     <option value="STUDIO_PREMIUM">Studio Premium (Aesthetic) ✦</option>
-                    <option value="COSMIC">Lumière Cosmique et Mystique ✦</option>
-                    <option value="OASIS">Dunes de Sable & Oasis ✦</option>
+                    <option value="COSMIC">Lumière Cosmique & Mystique (Alchimie) ✦</option>
+                    <option value="OASIS">Dunes de Sable & Oasis du Sud ✦</option>
+                    <option value="MINIMALIST_ZEN">Épuré & Zen (Wabi-Sabi) ✦</option>
+                    <option value="VINTAGE_HERBALIST">Apothicaire Ancestrale (Vintage) ✦</option>
+                    <option value="ROYAL_HAMMAM">Bain Impérial & Hammam Royal ✦</option>
+                    <option value="SACRED_LUNAR">Nuit Céleste & Astrologie Sacrée ✦</option>
+                    <option value="ATLAS_SUNSET">Crépuscule d'Ambre & Terre Rouge ✦</option>
                   </select>
                 </div>
               </div>
@@ -834,6 +859,61 @@ export default function AdminPanel({
                   </>
                 )}
               </button>
+
+              {/* History Gallery of generated images for this session */}
+              {generatedImages.length > 0 && (
+                <div className="p-3.5 bg-[#171411] rounded-xs border border-[#A67C52]/20 space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#A67C52] flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-amber-500 animate-pulse" />
+                      Historique des Essais IA ({generatedImages.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGeneratedImages([]);
+                        setImageUrl(PHOTO_PRESETS[0].url);
+                      }}
+                      className="text-[9px] text-[#E8DCC6]/60 hover:text-white underline font-mono cursor-pointer"
+                    >
+                      Effacer les essais
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#F7F2EB]/70 leading-relaxed font-sans mt-0.5">
+                    Cliquez sur un visuel de l'historique ci-dessous pour le restaurer instantanément sur votre fiche produit active :
+                  </p>
+                  
+                  <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-1 scrollbar-thin scrollbar-thumb-[#A67C52]/40">
+                    {generatedImages.map((imgUrl, i) => {
+                      const isActive = imageUrl === imgUrl;
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => setImageUrl(imgUrl)}
+                          className={`relative w-23 h-16 flex-shrink-0 cursor-pointer rounded-xs overflow-hidden border transition-all ${
+                            isActive 
+                              ? 'border-[#A67C52] scale-105 ring-1 ring-[#A67C52]' 
+                              : 'border-white/10 hover:border-[#A67C52]/60 filter grayscale-[20%] hover:grayscale-0'
+                          }`}
+                          title={`Essai IA #${generatedImages.length - i}`}
+                        >
+                          <img 
+                            src={imgUrl} 
+                            alt={`Photo IA ${i}`} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                          {isActive && (
+                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center backdrop-blur-[0.5px]">
+                              <span className="bg-[#A67C52] text-white rounded-full h-4 w-4 flex items-center justify-center text-[9px] font-bold font-sans">✓</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

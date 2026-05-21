@@ -109,9 +109,25 @@ export default function ProductDetailsModal({
               </h2>
             </div>
 
-            <p className="text-lg font-serif font-semibold text-[#A67C52]">
-              {formatPrice(product.price, selectedCurrency)}
-            </p>
+            <div className="flex items-center gap-3">
+              {product.compareAtPrice && product.compareAtPrice > product.price ? (
+                <>
+                  <span className="text-sm text-gray-400 line-through tracking-wider font-light">
+                    {formatPrice(product.compareAtPrice, selectedCurrency)}
+                  </span>
+                  <p className="text-xl font-serif font-semibold text-red-750">
+                    {formatPrice(product.price, selectedCurrency)}
+                  </p>
+                  <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                    REMISE
+                  </span>
+                </>
+              ) : (
+                <p className="text-xl font-serif font-semibold text-[#A67C52]">
+                  {formatPrice(product.price, selectedCurrency)}
+                </p>
+              )}
+            </div>
 
             {/* Inner Tabs for better screen presentation */}
             <div className="flex border-b border-[#E8DCC6] text-xs space-x-4">
@@ -163,25 +179,36 @@ export default function ProductDetailsModal({
           </div>
 
           <div className="space-y-3 pt-6 border-t border-[#E8DCC6]">
+            {/* Subtle Stock Alarm */}
+            {product.inventory !== undefined && product.inventory > 0 && product.inventory <= 5 && (
+              <div className="text-xs text-red-750 font-bold uppercase tracking-wider text-center animate-pulse">
+                {language === 'EN' ? `Only ${product.inventory} items left in stock!` : `Plus que ${product.inventory} unités disponibles !`}
+              </div>
+            )}
+
             <button
               id="btn-add-to-cart-modal"
               onClick={handleAdd}
-              disabled={product.inStock === false}
+              disabled={product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0)}
               className={`w-full py-4 text-xs uppercase font-bold tracking-[0.2em] transition-all flex items-center justify-center gap-2 rounded-sm ${
-                product.inStock === false
+                product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0)
                   ? 'bg-red-50 text-red-700 border border-red-200 cursor-not-allowed'
                   : success 
                     ? 'bg-green-700 text-white' 
-                    : 'bg-[#1E1A16] text-[#F7F2EB] hover:bg-[#A67C52]'
+                    : product.status === 'PREORDER'
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'bg-[#1E1A16] text-[#F7F2EB] hover:bg-[#A67C52]'
               }`}
             >
-              {product.inStock === false ? (
+              {product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0) ? (
                 language === 'EN' ? 'OUT OF STOCK' : 'RUPTURE DE STOCK'
               ) : success ? (
                 <>
                   <Check className="h-4 w-4" />
                   {successText}
                 </>
+              ) : product.status === 'PREORDER' ? (
+                language === 'EN' ? 'PRE-ORDER ✦' : 'RÉSERVER EN PRÉCOMMANDE ✦'
               ) : (
                 addToCartText
               )}

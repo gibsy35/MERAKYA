@@ -212,6 +212,56 @@ async function startServer() {
     }
   });
 
+  // API route for generating a Stripe Payment Intent (for customized inline checkout experience)
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      const { amount, currency, email, customerName, metadata } = req.body;
+
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: "Le montant du paiement est invalide." });
+      }
+
+      const hasKey = !!process.env.STRIPE_SECRET_KEY;
+      if (!hasKey) {
+        return res.status(400).json({
+          error: "STRIPE_SECRET_KEY_MISSING",
+          message: "Clé STRIPE_SECRET_KEY manquante. Veuillez la configurer dans l'onglet Settings > Secrets pour l'activer en production."
+        });
+      }
+
+      const stripe = getStripeClient();
+
+      // Stripe unit amount expects integers in cents/smallest fractional currency unit
+      const unitAmount = Math.round(parseFloat(amount) * 100);
+
+      console.log(`Generating Stripe Payment Intent for ${unitAmount} ${currency || "MAD"} for customer ${customerName || email}`);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: unitAmount,
+        currency: (currency || "MAD").toLowerCase(),
+        receipt_email: email || undefined,
+        metadata: {
+          customerName: customerName || "",
+          currencyChoice: currency || "MAD",
+          ...(metadata || {})
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      return res.json({
+        clientSecret: paymentIntent.client_secret,
+        id: paymentIntent.id
+      });
+    } catch (error: any) {
+      console.error("Stripe Payment Intent generation error:", error);
+      return res.status(500).json({
+        error: error.message || "Une erreur s'est produite lors de la génération de l'intention de paiement."
+      });
+    }
+  });
+
 
   // Vite middleware setup to mount SPA compilation and HMR controls
   if (process.env.NODE_ENV !== "production") {

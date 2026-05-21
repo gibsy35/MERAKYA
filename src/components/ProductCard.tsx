@@ -78,12 +78,20 @@ export default function ProductCard({
           {category}
         </div>
 
-        {/* Out of Stock Badge */}
-        {product.inStock === false && (
+        {/* Out of Stock and Preorder Badge */}
+        {product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0) ? (
           <div className="absolute top-2 right-2 bg-red-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs animate-pulse">
             {language === 'EN' ? 'SOLD OUT' : 'RUPTURE'}
           </div>
-        )}
+        ) : product.status === 'PREORDER' ? (
+          <div className="absolute top-2 right-2 bg-indigo-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
+            {language === 'EN' ? 'PRE-ORDER' : 'PRÉCOMMANDE'}
+          </div>
+        ) : product.isLimitedEdition || (product.inventory !== undefined && product.inventory > 0 && product.inventory <= 5) ? (
+          <div className="absolute top-2 right-2 bg-[#A67C52] text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
+            {language === 'EN' ? 'LIMITED' : 'ÉDITION LIMITÉE'}
+          </div>
+        ) : null}
       </div>
 
       <div className="text-center px-1 flex-1 flex flex-col justify-between">
@@ -97,23 +105,50 @@ export default function ProductCard({
         </div>
         
         <div>
-          <p className="text-sm font-semibold text-[#A67C52] tracking-wider mb-3">
-            {formatPrice(product.price, selectedCurrency)}
-          </p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            {product.compareAtPrice && product.compareAtPrice > product.price ? (
+              <>
+                <span className="text-xs text-gray-400 line-through tracking-wider font-light">
+                  {formatPrice(product.compareAtPrice, selectedCurrency)}
+                </span>
+                <span className="text-sm font-semibold text-red-750 tracking-wider">
+                  {formatPrice(product.price, selectedCurrency)}
+                </span>
+              </>
+            ) : (
+              <span className="text-sm font-semibold text-[#A67C52] tracking-wider">
+                {formatPrice(product.price, selectedCurrency)}
+              </span>
+            )}
+          </div>
+          
+          {/* Subtle Stock Alarm */}
+          {product.inventory !== undefined && product.inventory > 0 && product.inventory <= 5 && (
+            <div className="text-[10px] text-red-700 font-medium mb-2 uppercase tracking-wider animate-pulse">
+              {language === 'EN' ? `Only ${product.inventory} left in stock!` : `Plus que ${product.inventory} exemplaires !`}
+            </div>
+          )}
           
           <button
             id={`btn-add-to-cart-card-${product.id}`}
-            onClick={() => product.inStock !== false && onAddToCart(product)}
-            disabled={product.inStock === false}
+            onClick={() => {
+              const works = product.status !== 'OUT_OF_STOCK' && product.inStock !== false && (product.inventory === undefined || product.inventory > 0);
+              if (works) onAddToCart(product);
+            }}
+            disabled={product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0)}
             className={`w-full border py-2 px-3 text-[10px] uppercase tracking-widest font-bold transition-all duration-300 rounded-sm ${
-              product.inStock === false
+              product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0)
                 ? 'border-red-200 text-red-700 bg-red-50/50 cursor-not-allowed'
-                : 'border-[#A67C52] text-[#A67C52] hover:bg-[#A67C52] hover:text-[#F7F2EB]'
+                : product.status === 'PREORDER'
+                  ? 'border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white'
+                  : 'border-[#A67C52] text-[#A67C52] hover:bg-[#A67C52] hover:text-[#F7F2EB]'
             }`}
           >
-            {product.inStock === false 
+            {product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0)
               ? (language === 'EN' ? 'Sold Out ✦' : 'Rupture ✦')
-              : buyButtonText
+              : product.status === 'PREORDER'
+                ? (language === 'EN' ? 'Pre-order ✦' : 'Précommander ✦')
+                : buyButtonText
             }
           </button>
         </div>

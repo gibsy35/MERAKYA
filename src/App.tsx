@@ -9,15 +9,15 @@ import AdminPanel from './components/AdminPanel';
 import AuthGatewayModal from './components/AuthGatewayModal';
 import HelpAndInquiriesModal from './components/HelpAndInquiriesModal';
 import SpiritualLogo from './components/SpiritualLogo';
-import moroccanHeroBg from '../merakya_brand_hero_oriental_1779243623302.png';
-import imgAbondance from '../merakya_abondance_1779241793445.png';
-import imgRoseDamas from '../merakya_rose_damas_1779241813197.png';
-import imgMauvaisOeil from '../merakya_mauvais_oeil_1779241832267.png';
-import imgAlchimieArgile from '../merakya_alchimie_argile_1779241853230.png';
-import imgRoseSculptee from '../merakya_rose_sculptee_1779241869509.png';
-import imgSelsPurification from '../merakya_sels_purification_1779243565328.png';
-import imgElixirEtoiles from '../merakya_elixir_etoiles_1779243585736.png';
-import imgCoffretLune from '../merakya_coffret_lune_1779243605101.png';
+import moroccanHeroBg from './assets/images/merakya_brand_hero_oriental_1779243623302.png';
+import imgAbondance from './assets/images/merakya_abondance_1779241793445.png';
+import imgRoseDamas from './assets/images/merakya_rose_damas_1779241813197.png';
+import imgMauvaisOeil from './assets/images/merakya_mauvais_oeil_1779241832267.png';
+import imgAlchimieArgile from './assets/images/merakya_alchimie_argile_1779241853230.png';
+import imgRoseSculptee from './assets/images/merakya_rose_sculptee_1779241869509.png';
+import imgSelsPurification from './assets/images/merakya_sels_purification_1779243565328.png';
+import imgElixirEtoiles from './assets/images/merakya_elixir_etoiles_1779243585736.png';
+import imgCoffretLune from './assets/images/merakya_coffret_lune_1779243605101.png';
 
 import { Language, translations, PRODUCT_TRANSLATIONS, ARTICLE_TRANSLATIONS, REVIEW_TRANSLATIONS } from './translations';
 
@@ -402,6 +402,7 @@ export default function App() {
           articles={articles}
           onUpdateArticles={setArticles}
           language={language}
+          selectedCurrency={selectedCurrency}
         />
       ) : (
         <main className="w-full">
@@ -661,10 +662,10 @@ export default function App() {
 
                   {/* Right Arched doorway elements & decorative geometry layout */}
                   <div className="lg:col-span-7 relative">
-                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-2xl border border-[#A67C52]/30 bg-[#1E1A16] p-8 flex flex-col justify-center items-center text-center">
+                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-xl border border-[#A67C52]/20 bg-[#1E1A16]/80 backdrop-blur-md p-8 flex flex-col justify-center items-center text-center">
                       
                       {/* Subtly animated background glow */}
-                      <div className="absolute inset-0 bg-radial from-[#3D2C1E] via-[#1E1A16] to-[#1E1A16] opacity-90" />
+                      <div className="absolute inset-0 bg-radial from-[#3D2C1E]/60 via-[#1E1A16]/70 to-[#1E1A16]/80 opacity-75" />
                       
                       {/* Fine geometric Zellij layout background patterns */}
                       <div className="absolute inset-5 border border-[#A67C52]/20 rounded-xs pointer-events-none" />
@@ -704,12 +705,16 @@ export default function App() {
 
                       {/* Spiritual Quote on top of mandala */}
                       <div className="relative z-10 max-w-sm space-y-3">
-                        <p className="font-serif italic text-base sm:text-lg leading-relaxed text-[#F7F2EB] pt-1">
-                          "Chaque rituel est un dialogue secret entre l’âme de la nature et votre propre lumière intérieure."
+                        <p className="font-serif italic text-base sm:text-lg leading-relaxed text-[#F7F2EB] pt-1 pt-1">
+                          {language === 'EN' 
+                            ? '"Each ritual is a secret dialogue between the soul of nature and your own inner light."'
+                            : '"Chaque rituel est un dialogue secret entre l’âme de la nature et votre propre lumière intérieure."'}
                         </p>
                         <div className="w-12 h-px bg-[#A67C52] mx-auto opacity-60" />
                         <p className="text-[10px] tracking-[0.2em] uppercase text-[#A67C52] font-semibold">
-                          ✧ l'essence spirituelle de merakya maroc ✧
+                          {language === 'EN'
+                            ? "✧ the spiritual essence of merakya morocco ✧"
+                            : "✧ l'essence spirituelle de merakya maroc ✧"}
                         </p>
                       </div>
 

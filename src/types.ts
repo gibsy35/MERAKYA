@@ -8,6 +8,12 @@ export interface Product {
   ingredients?: string;
   isCustom?: boolean;
   inStock?: boolean;
+  
+  // Extended e-commerce parameters
+  inventory?: number;       // Stock level
+  status?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'PREORDER'; // Stock status
+  compareAtPrice?: number;  // For discounted comparisons (strikethroughs)
+  isLimitedEdition?: boolean; // Limited edition/special harvest flag
 }
 
 export interface CartItem {

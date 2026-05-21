@@ -134,15 +134,49 @@ async function startServer() {
         return res.json({ imageUrl });
       } else {
         console.warn("No base64 data returned by model:", textLogs);
-        return res.status(500).json({ 
-          error: "Le modèle d'IA n'a pas pu dessiner de visuel pour ce prompt.", 
-          details: textLogs 
-        });
+        throw new Error("No image data returned from Gemini");
       }
     } catch (error: any) {
-      console.error("Gemini Image generation error:", error);
-      return res.status(500).json({ 
-        error: error.message || "Une erreur s'est produite lors de la connexion au modèle d'image de l'IA." 
+      console.warn("Skipping standard Gemini generation and launching aesthetic alchemical fallback due to API or Quota limit:", error.message || error);
+      
+      const textQuery = (req.body.prompt || "").toLowerCase() + " " + (req.body.category || "").toLowerCase();
+      let matchedUrl = "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=800"; // Lit amber candle
+      
+      if (textQuery.includes("sauge") || textQuery.includes("sauve") || textQuery.includes("clean") || textQuery.includes("herbe") || textQuery.includes("blanc") || textQuery.includes("pure") || textQuery.includes("sable")) {
+        matchedUrl = "https://images.unsplash.com/photo-1602872030219-cbf948a91478?auto=format&fit=crop&q=80&w=800"; // Sage candle jar
+      } else if (textQuery.includes("rose") || textQuery.includes("fleur") || textQuery.includes("damas") || textQuery.includes("parfum") || textQuery.includes("love") || textQuery.includes("amour")) {
+        matchedUrl = "https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&q=80&w=800"; // Rose bouquet soap
+      } else if (textQuery.includes("bain") || textQuery.includes("sel") || textQuery.includes("cristal") || textQuery.includes("marine") || textQuery.includes("mer") || textQuery.includes("sel de bain")) {
+        matchedUrl = "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800"; // Natural mineral salts
+      } else if (textQuery.includes("huile") || textQuery.includes("elixir") || textQuery.includes("extrait") || textQuery.includes("botanique") || textQuery.includes("visage") || textQuery.includes("serum") || textQuery.includes("sérum") || textQuery.includes("cheveux") || textQuery.includes("peau")) {
+        matchedUrl = "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=800"; // Pipette skin oil
+      } else if (textQuery.includes("savon") || textQuery.includes("soin") || textQuery.includes("argile") || textQuery.includes("lavande") || textQuery.includes("fleurie")) {
+        matchedUrl = "https://images.unsplash.com/photo-1506368249639-73a05d6f6488?auto=format&fit=crop&q=80&w=800"; // Lavender natural bar
+      } else if (textQuery.includes("hannan") || textQuery.includes("hammam") || textQuery.includes("noir") || textQuery.includes("eucalyptus") || textQuery.includes("gommage")) {
+        matchedUrl = "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=800"; // Eucalyptus leaf / design
+      } else if (textQuery.includes("orange") || textQuery.includes("fleur d'oranger") || textQuery.includes("agrume") || textQuery.includes("citron") || textQuery.includes("oranger")) {
+        matchedUrl = "https://images.unsplash.com/photo-1611081496685-afe4a34b2230?auto=format&fit=crop&q=80&w=800"; // Orange visual
+      } else if (textQuery.includes("encens") || textQuery.includes("oud") || textQuery.includes("fumée") || textQuery.includes("resine")) {
+        matchedUrl = "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=800"; // Burning incenses
+      } else if (textQuery.includes("jasmin") || textQuery.includes("fleur blanche")) {
+        matchedUrl = "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&q=80&w=800"; // Jasmine cosmetics style
+      } else if (textQuery.includes("bleu") || textQuery.includes("oeil") || textQuery.includes("nuit") || textQuery.includes("celeste")) {
+        matchedUrl = "https://images.unsplash.com/photo-1572726710708-2079fa5730ea?auto=format&fit=crop&q=80&w=800"; // Mystical blue
+      } else if (textQuery.includes("savon") || textQuery.includes("soap") || textQuery.includes("naturels")) {
+        matchedUrl = "https://images.unsplash.com/photo-1607006342411-9c315e717552?auto=format&fit=crop&q=80&w=800";
+      } else if (textQuery.includes("sel") || textQuery.includes("bain") || textQuery.includes("énergétiques")) {
+        matchedUrl = "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800";
+      } else if (textQuery.includes("huile") || textQuery.includes("élixir") || textQuery.includes("elixir") || textQuery.includes("botaniques")) {
+        matchedUrl = "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=800";
+      } else if (textQuery.includes("coffret") || textQuery.includes("rituels")) {
+        matchedUrl = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=800";
+      }
+      
+      // Return 200 with the fallback image URL and a clear isFallback indicator
+      return res.json({ 
+        imageUrl: matchedUrl, 
+        isFallback: true,
+        reason: error.message || "Quota de l'API Gemini dépassé pour les images. Évocation de secours activée."
       });
     }
   });

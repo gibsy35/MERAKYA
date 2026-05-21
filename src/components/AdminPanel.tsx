@@ -160,6 +160,7 @@ export default function AdminPanel({
 
   // Extended eCommerce Product State Controls
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string>('');
   const [inventoryForm, setInventoryForm] = useState('25');
   const [statusForm, setStatusForm] = useState<'IN_STOCK' | 'OUT_OF_STOCK' | 'PREORDER'>('IN_STOCK');
   const [comparePriceForm, setComparePriceForm] = useState('');
@@ -245,7 +246,9 @@ export default function AdminPanel({
 
   // Automated intelligent high-definition visual generator with custom mappings
   const handleVisualGenerate = async () => {
-    const textQuery = (visualPrompt || name || "sacré").trim();
+    const defaultName = editingProduct ? editingProduct.name : name;
+    const defaultCategory = editingProduct ? editingProduct.category : category;
+    const textQuery = (visualPrompt || defaultName || "sacré").trim();
     if (!textQuery) {
       displayNotification("⚠️ " + (language === 'EN' 
         ? "Please enter a visual prompt, name or product details to generate."
@@ -264,15 +267,23 @@ export default function AdminPanel({
         body: JSON.stringify({
           prompt: textQuery,
           style: visualStyle,
-          category: category
+          category: defaultCategory
         })
       });
 
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
-        setImageUrl(data.imageUrl);
+        if (editingProduct) {
+          setEditingProduct({
+            ...editingProduct,
+            image: data.imageUrl
+          });
+        } else {
+          setImageUrl(data.imageUrl);
+        }
         setGeneratedImages(prev => Array.from(new Set([data.imageUrl, ...prev])));
+        
         const styleNameMap: Record<string, { en: string; fr: string }> = {
           STUDIO_PREMIUM: { en: "Studio Premium", fr: "Studio Premium ✦" },
           COSMIC: { en: "Mystical Light", fr: "Inspiration Alchimique ✦" },
@@ -284,9 +295,16 @@ export default function AdminPanel({
           ATLAS_SUNSET: { en: "Atlas Sunset", fr: "Crépuscule d'Ambre & Terre Rouge ✦" }
         };
         const currentLabel = styleNameMap[visualStyle] || { en: visualStyle, fr: visualStyle };
-        displayNotification(`🎨 ` + (language === 'EN'
-          ? `Alchemical visual crafted by Gemini in style "${currentLabel.en} ✦" !`
-          : `Visuel sacré incarné via Gemini en style "${currentLabel.fr}" !`));
+        
+        if (data.isFallback) {
+          displayNotification(`✨ ` + (language === 'EN'
+            ? `Demonstration mode: beautifully mapped organic visual applied!`
+            : `Mode démonstration : superbe visuel organique et inspiré appliqué !`));
+        } else {
+          displayNotification(`🎨 ` + (language === 'EN'
+            ? `Alchemical visual crafted by Gemini in style "${currentLabel.en} ✦" !`
+            : `Visuel sacré incarné via Gemini en style "${currentLabel.fr}" !`));
+        }
       } else {
         throw new Error(data.error || "Génération échouée");
       }
@@ -303,7 +321,7 @@ export default function AdminPanel({
         matchedUrl = "https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&q=80&w=800"; // Rose bouquet soap
       } else if (fallbackQuery.includes("bain") || fallbackQuery.includes("sel") || fallbackQuery.includes("cristal") || fallbackQuery.includes("marine") || fallbackQuery.includes("mer") || fallbackQuery.includes("sel de bain")) {
         matchedUrl = "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800"; // Natural mineral salts
-      } else if (fallbackQuery.includes("huile") || fallbackQuery.includes("elixir") || fallbackQuery.includes("extrait") || fallbackQuery.includes("botanique") || fallbackQuery.includes("visage") || fallbackQuery.includes(" serum") || fallbackQuery.includes("sérum")) {
+      } else if (fallbackQuery.includes("huile") || fallbackQuery.includes("elixir") || fallbackQuery.includes("extrait") || fallbackQuery.includes("botanique") || fallbackQuery.includes("visage") || fallbackQuery.includes(" serum") || fallbackQuery.includes("sérum") || fallbackQuery.includes("cheveux")) {
         matchedUrl = "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=800"; // Pipette skin oil
       } else if (fallbackQuery.includes("savon") || fallbackQuery.includes("soin") || fallbackQuery.includes("argile") || fallbackQuery.includes("lavande") || fallbackQuery.includes("fleurie")) {
         matchedUrl = "https://images.unsplash.com/photo-1506368249639-73a05d6f6488?auto=format&fit=crop&q=80&w=800"; // Lavender natural bar
@@ -320,20 +338,27 @@ export default function AdminPanel({
       } else if (fallbackQuery.includes("ambre") || fallbackQuery.includes("or") || fallbackQuery.includes("epice") || fallbackQuery.includes("maroc") || fallbackQuery.includes("atlas")) {
         matchedUrl = "https://images.unsplash.com/photo-1596435764243-61b1f0d409b8?auto=format&fit=crop&q=80&w=800"; // Golden amber / spices
       } else {
-        if (category.includes("BOUGIE")) {
+        if (defaultCategory.includes("BOUGIE")) {
           matchedUrl = "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=800";
-        } else if (category.includes("SAVON") || category.includes("SOIN")) {
+        } else if (defaultCategory.includes("SAVON") || defaultCategory.includes("SOIN")) {
           matchedUrl = "https://images.unsplash.com/photo-1607006342411-9c315e717552?auto=format&fit=crop&q=80&w=800";
-        } else if (category.includes("SEL") || category.includes("BAIN")) {
+        } else if (defaultCategory.includes("SEL") || defaultCategory.includes("BAIN")) {
           matchedUrl = "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800";
-        } else if (category.includes("HUILE") || category.includes("ÉLIXIR") || category.includes("ELIXIR")) {
+        } else if (defaultCategory.includes("HUILE") || defaultCategory.includes("ÉLIXIR") || defaultCategory.includes("ELIXIR") || defaultCategory.includes("CHEVEUX")) {
           matchedUrl = "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=800";
         } else {
           matchedUrl = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=800";
         }
       }
       
-      setImageUrl(matchedUrl);
+      if (editingProduct) {
+        setEditingProduct({
+          ...editingProduct,
+          image: matchedUrl
+        });
+      } else {
+        setImageUrl(matchedUrl);
+      }
       setGeneratedImages(prev => Array.from(new Set([matchedUrl, ...prev])));
       
       const isApiKeyError = err.message && (err.message.includes("GEMINI_API_KEY") || err.message.includes("missing") || err.message.includes("key"));
@@ -1198,7 +1223,10 @@ export default function AdminPanel({
                           <td className="py-3 px-5 text-center">
                             <div className="flex items-center justify-center gap-2.5">
                               <button
-                                onClick={() => setEditingProduct(product)}
+                                onClick={() => {
+                                  setEditingProduct(product);
+                                  setOriginalImageUrl(product.image || '');
+                                }}
                                 className="p-1 px-2.5 bg-[#A67C52]/10 text-[#A67C52] hover:bg-[#A67C52] hover:text-[#F7F2EB] text-[10px] font-bold tracking-wider rounded-xs uppercase transition-all flex items-center gap-1"
                                 title="Modification avancée de la fiche"
                               >

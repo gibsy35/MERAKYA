@@ -1,7 +1,124 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Truck, CreditCard, RefreshCw, FileText, Shield, Globe } from 'lucide-react';
+import { X, Truck, CreditCard, RefreshCw, FileText, Shield, Globe, HelpCircle } from 'lucide-react';
 import { Language } from '../translations';
+
+interface FAQItem {
+  id: number;
+  question: { FR: string; EN: string };
+  answer: { FR: string; EN: string };
+}
+
+const FAQS: FAQItem[] = [
+  {
+    id: 1,
+    question: {
+      FR: "Comment utiliser et entretenir vos bougies d'intention ?",
+      EN: "How do I use and maintain your intention candles?"
+    },
+    answer: {
+      FR: "Pour une combustion optimale, coupez la mèche à 5 mm avant chaque allumage. Laissez la cire fondre uniformément sur toute la surface lors du premier brûlage (environ 2-3 heures) pour éviter l'effet 'tunnel'. Vous pouvez choisir de retirer les cristaux infusés ou de les laisser infuser leur énergie tout au long du rituel.",
+      EN: "For optimal burning, trim the wick to 5 mm before each lighting. Let the wax melt evenly across the entire surface during the first burn (about 2-3 hours) to avoid tunneling. You can choose to remove the infused crystals or let them release their energy throughout the ritual."
+    }
+  },
+  {
+    id: 2,
+    question: {
+      FR: "Vos créations cosmétiques sont-elles adaptées aux peaux sensibles ?",
+      EN: "Are your cosmetic creations suitable for sensitive skin?"
+    },
+    answer: {
+      FR: "Oui, absolument. Tous nos savons sculptés à froid et élixirs botaniques sont formulés à base d'huiles biologiques précieuses, de micas minéraux et d'actifs naturels. Ils sont entièrement exempts de sulfates, silicones, parabènes et huiles minérales. Si vous avez une peau extrêmement réactive, nous préconisons toujours de réaliser un test cutané préliminaire au pli du coude.",
+      EN: "Yes, absolutely. All our cold-process sculpted soaps and botanical elixirs are formulated with premium organic oils, mineral micas, and natural active ingredients. They are completely free of sulfates, silicones, parabens, and mineral oils. If you have extremely sensitive skin, we always suggest performing a patch test on your inner elbow first."
+    }
+  },
+  {
+    id: 3,
+    question: {
+      FR: "Quelle est l'origine de vos matières premières botaniques ?",
+      EN: "What is the origin of your botanical raw materials?"
+    },
+    answer: {
+      FR: "Nous sourçons avec passion et éthique la majorité de nos ingrédients au cœur du Maroc. Nos huiles précieuses d'argan, de pépin de figue de barbarie et nos argiles minérales proviennent de coopératives de femmes locales et de producteurs éco-responsables engagés dans le respect de la biodiversité.",
+      EN: "We passionately and ethically source most of our ingredients from the heart of Morocco. Our precious argan oil, prickly pear seed oil, and mineral clays come from local women's cooperatives and eco-friendly producers committed to biodiversity."
+    }
+  },
+  {
+    id: 4,
+    question: {
+      FR: "Puis-je personnaliser des coffrets rituels pour un événement ?",
+      EN: "Can I customize ritual gift boxes for an event?"
+    },
+    answer: {
+      FR: "Certainement. Nous créons des expériences sensorielles sur-mesure pour vos mariages, baptêmes, rituels ou événements d'entreprise (choix des parfums sacrés, personnalisation des étiquettes et coffrets). N'hésitez pas à solliciter notre service conciergerie à l'adresse contact@merakyalab.com pour concevoir votre univers.",
+      EN: "Certainly. We design tailor-made sensory experiences for your weddings, baptisms, private rituals, or corporate events (custom sacred fragrances, personalized labels, and gift boxes). Feel free to reach out to our concierge service at contact@merakyalab.com to develop your bespoke universe."
+    }
+  },
+  {
+    id: 5,
+    question: {
+      FR: "Vos produits sont-ils véganes et non testés sur les animaux ?",
+      EN: "Are your products vegan and cruelty-free?"
+    },
+    answer: {
+      FR: "Conformément à nos valeurs holistiques et éthiques de soin du vivant, aucune de nos créations n'est testée sur les animaux. De plus, 100% de nos savons et huiles sont de composition purement végétale (végane). Seules certaines bougies spécifiques peuvent parfois utiliser de la cire d'abeille bio et locale de l'Atlas, mentionnée explicitement dans leur composition.",
+      EN: "In alignment with our holistic values and respect for all living beings, none of our creations are tested on animals. Furthermore, 100% of our soaps and oils are purely plant-based (vegan). Only a few specific candles may sometimes contain local organic Atlas beeswax, which is explicitly noted in their ingredients list."
+    }
+  }
+];
+
+function FAQSection({ language }: { language: Language }) {
+  const [openId, setOpenId] = React.useState<number | null>(null);
+
+  const toggleFaq = (id: number) => {
+    setOpenId(openId === id ? null : id);
+  };
+
+  return (
+    <div className="space-y-4 font-sans max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
+      {FAQS.map((faq) => {
+        const isOpen = openId === faq.id;
+        const questionText = language === 'EN' ? faq.question.EN : faq.question.FR;
+        const answerText = language === 'EN' ? faq.answer.EN : faq.answer.FR;
+
+        return (
+          <div 
+            key={faq.id} 
+            className="border border-[#E8DCC6]/60 rounded-xs overflow-hidden bg-white/40 transition-all duration-300 hover:border-[#A67C52]/50"
+          >
+            <button
+              id={`faq-toggle-${faq.id}`}
+              onClick={() => toggleFaq(faq.id)}
+              className="w-full text-left p-4 flex justify-between items-center gap-4 hover:bg-white/20 transition-all"
+            >
+              <span className="font-serif text-xs md:text-[13px] font-medium text-[#1E1A16] leading-snug">
+                {questionText}
+              </span>
+              <span className={`text-[#A67C52] text-[10px] shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                ✦
+              </span>
+            </button>
+            
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div className="p-4 pt-0 text-xs md:text-[12.5px] leading-relaxed text-[#1E1A16]/75 font-light border-t border-[#E8DCC6]/30 bg-white/10">
+                    {answerText}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 interface HelpAndInquiriesModalProps {
   isOpen: boolean;
@@ -125,6 +242,13 @@ export default function HelpAndInquiriesModal({
           </div>
         </div>
       )
+    },
+    {
+      id: 'faq',
+      name: 'FAQ',
+      icon: HelpCircle,
+      title: 'FAQ – Questions Fréquentes',
+      content: <FAQSection language={language} />
     },
     {
       id: 'conditions',
@@ -296,6 +420,13 @@ export default function HelpAndInquiriesModal({
           </div>
         </div>
       )
+    },
+    {
+      id: 'faq',
+      name: 'FAQ',
+      icon: HelpCircle,
+      title: 'FAQ - Common Questions',
+      content: <FAQSection language={language} />
     },
     {
       id: 'conditions',

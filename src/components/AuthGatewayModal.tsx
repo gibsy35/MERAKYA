@@ -1,22 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Lock, Mail, Phone, MapPin, Sparkles, CheckCircle, LogOut } from 'lucide-react';
-import { ClientAccount } from '../types';
-import { Language, translations } from '../translations';
+import { X, User, Lock, Mail, Phone, MapPin, Sparkles, CheckCircle, LogOut, Heart, Trash2, ShoppingBag } from 'lucide-react';
+import { ClientAccount, Product, CurrencyCode, formatPrice } from '../types';
+import { Language, translations, PRODUCT_TRANSLATIONS } from '../translations';
 
 interface AuthGatewayModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdminActivate: () => void;
   language?: Language;
+  products?: Product[];
+  wishlist?: string[];
+  onToggleWishlist?: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
+  selectedCurrency?: CurrencyCode;
 }
 
 export default function AuthGatewayModal({
   isOpen,
   onClose,
   onAdminActivate,
-  language = 'FR'
+  language = 'FR',
+  products = [],
+  wishlist = [],
+  onToggleWishlist,
+  onAddToCart = () => {},
+  selectedCurrency = 'MAD'
 }: AuthGatewayModalProps) {
   const [activeMode, setActiveMode] = useState<'signin' | 'signup' | 'dashboard'>('signin');
+  const [dashboardTab, setDashboardTab] = useState<'profile' | 'wishlist'>('profile');
   
   // Login Form States
   const [loginEmail, setLoginEmail] = useState('');
@@ -120,6 +131,7 @@ export default function AuthGatewayModal({
     localStorage.removeItem('merakya_logged_client');
     setLoggedInClient(null);
     setActiveMode('signin');
+    setDashboardTab('profile');
   };
 
   return (
@@ -305,34 +317,138 @@ export default function AuthGatewayModal({
         {/* Dashboard Client UI */}
         {activeMode === 'dashboard' && loggedInClient && (
           <div className="space-y-4 pt-2">
-            <div className="bg-[#E8DCC6]/30 p-4 border border-[#E8DCC6] rounded-sm space-y-2">
-              <p className="text-xs text-[#A67C52] font-semibold tracking-wide flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5" /> {t('auth_personal_initiated')}
-              </p>
-              <h3 className="font-serif text-[#1E1A16] text-lg font-bold">
-                {loggedInClient.fullName}
-              </h3>
-              <div className="text-xs text-[#1E1A16]/85 space-y-1 pt-1 border-t border-[#E8DCC6]/60">
-                <p className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-[#A67C52]" /> {loggedInClient.email}</p>
-                <p className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-[#A67C52]" /> {loggedInClient.phone}</p>
-                <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-[#A67C52]" /> {t('auth_city_prefix')} {loggedInClient.city}</p>
-                <p className="font-sans text-[10px] text-gray-500 uppercase mt-2 pt-1">{t('auth_member_since')} {loggedInClient.registeredAt}</p>
-              </div>
+            
+            {/* Sub-tabs for Authenticated Dashboard */}
+            <div className="flex border-b border-[#E8DCC6] text-xs space-x-6 mb-4 justify-center">
+              <button
+                type="button"
+                onClick={() => setDashboardTab('profile')}
+                className={`pb-2 uppercase tracking-widest font-bold transition-all ${
+                  dashboardTab === 'profile' ? 'border-b-2 border-[#A67C52] text-[#A67C52]' : 'text-gray-400 hover:text-[#1E1A16]'
+                }`}
+              >
+                {language === 'EN' ? "My Profile" : "Mon Profil"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDashboardTab('wishlist')}
+                className={`pb-2 uppercase tracking-widest font-bold transition-all flex items-center gap-1 ${
+                  dashboardTab === 'wishlist' ? 'border-b-2 border-[#A67C52] text-[#A67C52]' : 'text-gray-400 hover:text-[#1E1A16]'
+                }`}
+              >
+                <Heart className={`h-3 w-3 ${dashboardTab === 'wishlist' ? "fill-[#A67C52]" : ""}`} />
+                {language === 'EN' ? "My Favorites" : "Mes Favoris"}
+                {wishlist.length > 0 && (
+                  <span className="bg-[#A67C52] text-white rounded-full px-1.5 py-0.5 text-[9px] font-mono leading-none">
+                    {wishlist.length}
+                  </span>
+                )}
+              </button>
             </div>
 
-            <div className="border border-[#E8DCC6] p-3 text-xs text-[#1E1A16]/80 bg-white">
-              <span className="font-bold block mb-1">{t('auth_tracking_title')}</span>
-              <p>{t('auth_tracking_desc')}</p>
-            </div>
+            {dashboardTab === 'profile' && (
+              <>
+                <div className="bg-[#E8DCC6]/30 p-4 border border-[#E8DCC6] rounded-sm space-y-2">
+                  <p className="text-xs text-[#A67C52] font-semibold tracking-wide flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5" /> {t('auth_personal_initiated')}
+                  </p>
+                  <h3 className="font-serif text-[#1E1A16] text-lg font-bold">
+                    {loggedInClient.fullName}
+                  </h3>
+                  <div className="text-xs text-[#1E1A16]/85 space-y-1 pt-1 border-t border-[#E8DCC6]/60">
+                    <p className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-[#A67C52]" /> {loggedInClient.email}</p>
+                    <p className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-[#A67C52]" /> {loggedInClient.phone}</p>
+                    <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-[#A67C52]" /> {t('auth_city_prefix')} {loggedInClient.city}</p>
+                    <p className="font-sans text-[10px] text-gray-500 uppercase mt-2 pt-1">{t('auth_member_since')} {loggedInClient.registeredAt}</p>
+                  </div>
+                </div>
+
+                <div className="border border-[#E8DCC6] p-3 text-xs text-[#1E1A16]/80 bg-white">
+                  <span className="font-bold block mb-1">{t('auth_tracking_title')}</span>
+                  <p>{t('auth_tracking_desc')}</p>
+                </div>
+              </>
+            )}
+
+            {dashboardTab === 'wishlist' && (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {wishlist.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 italic text-xs">
+                    {language === 'EN' ? "Your wishlist is currently empty." : "Votre liste de souhaits est vide d'intentions."}
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="mt-3 block mx-auto text-[10px] text-[#A67C52] underline uppercase tracking-widest font-bold font-sans"
+                    >
+                      {language === 'EN' ? "Discover Creational Rituals" : "Découvrir les Rituels"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {products.filter(p => wishlist.includes(p.id)).map(product => {
+                      const trans = PRODUCT_TRANSLATIONS[product.id];
+                      const name = language === 'EN' && trans ? trans.nameEn : product.name;
+                      
+                      return (
+                        <div key={product.id} className="bg-white p-2.5 rounded-sm border border-[#E8DCC6] flex items-center gap-3 hover:shadow-sm transition-all text-left">
+                          <img 
+                            src={product.image} 
+                            alt={name} 
+                            className="w-12 h-16 object-cover rounded-xs bg-[#F7F2EB] border border-[#E8DCC6]/40" 
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-serif text-[13px] text-[#1E1A16] font-semibold truncate leading-tight">
+                              {name}
+                            </h4>
+                            <p className="text-[10px] text-[#A67C52] uppercase font-bold tracking-wider mt-0.5">
+                              {formatPrice(product.price, selectedCurrency)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {product.inStock !== false && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onAddToCart(product);
+                                  setSuccessMsg(language === 'EN' ? `Added ${name} to cart!` : `Ajouté ${name} au panier !`);
+                                  setTimeout(() => setSuccessMsg(''), 3500);
+                                }}
+                                className="p-1.5 bg-[#A67C52] text-white hover:bg-[#1E1A16] rounded-full transition-colors cursor-pointer"
+                                title={language === 'EN' ? "Add to cart" : "Ajouter au panier"}
+                              >
+                                <ShoppingBag className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onToggleWishlist) onToggleWishlist(product);
+                              }}
+                              className="p-1.5 bg-gray-50 text-gray-400 hover:text-red-700 rounded-full hover:bg-red-50 transition-colors border border-gray-100 cursor-pointer"
+                              title={language === 'EN' ? "Remove" : "Retirer"}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={handleLogout}
                 className="w-1/2 bg-white border border-[#E8DCC6] text-gray-600 hover:text-red-700 py-2 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" /> {t('auth_btn_logout')}
               </button>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-1/2 bg-[#1E1A16] text-[#F7F2EB] py-2 text-xs font-bold uppercase tracking-widest hover:bg-[#A67C52]"
               >

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CartItem, Product, Order, CurrencyCode, formatPrice } from '../types';
-import { X, Trash2, ShieldCheck, ShoppingBag, Landmark, ArrowRight } from 'lucide-react';
+import { X, Trash2, ShieldCheck, ShoppingBag, Landmark, ArrowRight, Gift } from 'lucide-react';
 import { Language, translations, PRODUCT_TRANSLATIONS } from '../translations';
 
 interface ShoppingCartDrawerProps {
@@ -141,6 +141,24 @@ export default function ShoppingCartDrawer({
         customerPhone: phone,
         customerAddress: `${address}, ${city}, ${selectedCurrency === 'MAD' ? 'Maroc' : country}`
       });
+
+      // Automated SMTP Email Notification Dispatcher
+      fetch('/api/send-order-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: trackingCode,
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          customerAddress: `${address}, ${city}, ${selectedCurrency === 'MAD' ? 'Maroc' : country}`,
+          cart: cart,
+          totalAmount: totalAmount,
+          currency: selectedCurrency,
+          paymentMethod: paymentMethod === 'card' ? 'card' : 'cod',
+          language: language
+        })
+      }).catch(err => console.warn("Mailing background delivery skipped in simulated network state:", err));
 
       // Save clients account details if specified
       if (createAccount && email) {
@@ -684,27 +702,65 @@ export default function ShoppingCartDrawer({
               ) : (
                 <div id="cart-items-scroller" className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
                   
-                  {/* Delivery meter info */}
-                  <div className="bg-[#E8DCC6]/40 p-3 rounded-xs text-[11px] text-[#6B4E2E] leading-relaxed border border-[#E8DCC6]">
-                    {remainingForFreeShipping > 0 ? (
-                      <p>
-                        {language === 'EN' ? (
-                          <>Add <strong className="font-sans font-bold">{formatPrice(remainingForFreeShipping, selectedCurrency)}</strong> more to get <strong>free delivery</strong> anywhere in Morocco!</>
-                        ) : (
-                          <>Ajoutez encore <strong className="font-sans font-bold">{formatPrice(remainingForFreeShipping, selectedCurrency)}</strong> pour obtenir la <strong>livraison gratuite</strong> partout au Maroc !</>
-                        )}
-                      </p>
-                    ) : (
-                      <p className="text-green-800 font-bold flex items-center gap-1">
-                        {language === 'EN' ? "✦ Congratulations! Your order qualifies for free delivery!" : "✦ Félicitations ! Votre commande bénéficie de la livraison gratuite !"}
-                      </p>
-                    )}
-                    <div className="w-full bg-[#F7F2EB] h-1.5 mt-2 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-[#A67C52] h-full transition-all duration-300"
-                        style={{ width: `${Math.min(100, (totalAmount / freeShippingThreshold) * 100)}%` }}
-                      />
+                  {/* Delivery & Alchemical Gift meter info */}
+                  <div className="space-y-3.5">
+                    {/* Free shipping progress */}
+                    <div className="bg-[#E8DCC6]/40 p-3 rounded-xs text-[11px] text-[#6B4E2E] leading-relaxed border border-[#E8DCC6]/60">
+                      {remainingForFreeShipping > 0 ? (
+                        <p>
+                          {language === 'EN' ? (
+                            <>Add <strong className="font-sans font-bold">{formatPrice(remainingForFreeShipping, selectedCurrency)}</strong> more to get <strong>free delivery</strong> anywhere in Morocco!</>
+                          ) : (
+                            <>Ajoutez encore <strong className="font-sans font-bold">{formatPrice(remainingForFreeShipping, selectedCurrency)}</strong> pour obtenir la <strong>livraison gratuite</strong> partout au Maroc !</>
+                          )}
+                        </p>
+                      ) : (
+                        <p className="text-green-800 font-bold flex items-center gap-1">
+                          ✦ {language === 'EN' ? "Congratulations! Your order qualifies for free delivery!" : "Félicitations ! Votre commande bénéficie de la livraison gratuite !"}
+                        </p>
+                      )}
+                      <div className="w-full bg-[#F7F2EB] h-1.5 mt-2 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-[#A67C52] h-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, (totalAmount / freeShippingThreshold) * 100)}%` }}
+                        />
+                      </div>
                     </div>
+
+                    {/* Alchemical Gift progress */}
+                    {(() => {
+                      const giftThreshold = selectedCurrency === 'MAD' ? 950 : 95;
+                      const remainingForGift = giftThreshold - totalAmount;
+                      return (
+                        <div className="bg-[#A67C52]/5 border border-[#A67C52]/30 p-3 rounded-xs text-[11px] text-[#A67C52] leading-relaxed">
+                          {remainingForGift > 0 ? (
+                            <div className="flex items-start gap-2">
+                              <Gift className="h-4 w-4 shrink-0 mt-0.5 animate-pulse" />
+                              <p>
+                                {language === 'EN' ? (
+                                  <>Add <strong className="font-sans font-bold">{formatPrice(remainingForGift, selectedCurrency)}</strong> more to unlock your free premium gift: <strong>Intention Elixir of the Atlas</strong>! ✦</>
+                                ) : (
+                                  <>Ajoutez encore <strong className="font-sans font-bold">{formatPrice(remainingForGift, selectedCurrency)}</strong> pour débloquer votre cadeau offert : <strong>L'Élixir Intentionnel de l'Atlas</strong> ! ✦</>
+                                )}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-2 text-green-800 font-bold">
+                              <Gift className="h-4 w-4 shrink-0 mt-0.5 text-green-700" />
+                              <p>
+                                ✦ {language === 'EN' ? "Sacred Gift Unlocked: Divine Intention Elixir of the Atlas added below!" : "Cadeau d'Exception Débloqué : Élixir Intentionnel de l'Atlas offert d'office !"}
+                              </p>
+                            </div>
+                          )}
+                          <div className="w-full bg-[#F7F2EB] h-1.5 mt-2 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-amber-600 h-full transition-all duration-300"
+                              style={{ width: `${Math.min(100, (totalAmount / giftThreshold) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="divide-y divide-[#E8DCC6]">
@@ -771,6 +827,44 @@ export default function ShoppingCartDrawer({
                       </div>
                     );
                   })}
+
+                  {/* Free Sacred Gift Item Row */}
+                  {(() => {
+                    const giftThreshold = selectedCurrency === 'MAD' ? 950 : 95;
+                    if (totalAmount >= giftThreshold) {
+                      return (
+                        <div className="py-4.5 flex items-center justify-between gap-3 border-t-2 border-dashed border-[#A67C52] bg-[#A67C52]/5 px-3 rounded-xs animate-fade-in my-1">
+                          <div className="relative shrink-0">
+                            <img 
+                              src="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=150&q=80" 
+                              alt="L'Élixir Élixir Intentionnel de l'Atlas"
+                              className="w-16 h-16 rounded-xs object-cover border border-[#A67C52]/40 shadow-sm"
+                              referrerPolicy="no-referrer"
+                            />
+                            <span className="absolute -top-1.5 -right-1.5 bg-[#A67C52] text-white text-[7.5px] tracking-widest font-bold px-1 py-0.5 rounded-full uppercase font-mono shadow-md">✦ GIFT ✦</span>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 text-left">
+                            <h4 className="font-serif text-[13.5px] text-[#1E1A16] font-bold tracking-wide flex items-center gap-1.5 leading-tight">
+                              <Gift className="h-4 w-4 text-[#A67C52] animate-pulse" />
+                              {language === 'EN' ? "Aura Elixir of the Atlas" : "L'Élixir Intentionnel de l'Atlas"}
+                            </h4>
+                            <span className="text-[9.5px] text-[#A67C52] tracking-widest block uppercase mt-0.5 font-semibold">
+                              {language === 'EN' ? "CELESTIAL REWARD" : "CADEAU D'EXCEPTION"}
+                            </span>
+                            <span className="text-[11px] font-bold text-green-700 block mt-1 uppercase">
+                              {language === 'EN' ? "FREE / OFFERT" : "GRATUIT / OFFERT"}
+                            </span>
+                          </div>
+                          
+                          <div className="text-right text-[10.5px] text-[#A67C52] font-mono italic">
+                            {language === 'EN' ? "Qty: 1" : "Qté: 1"}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   </div>
                 </div>
               )}

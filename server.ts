@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import Stripe from "stripe";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -181,10 +182,236 @@ async function startServer() {
     }
   });
 
+  // Transactional Email Confirmation system powered by joys.kenza@gmail.com
+  async function sendOrderConfirmationEmail(order: any, language: string) {
+    const smtpUser = process.env.SMTP_USER || "joys.kenza@gmail.com";
+    const smtpPass = process.env.SMTP_PASS || "fjqh-kiti-llgu-kvxo-jbyy";
+
+    if (!smtpUser || !smtpPass) {
+      console.warn("[SMTP] Configuration is incomplete. Skipping email dispatch.");
+      return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+    const isEn = language === "EN";
+    const currencyStr = order.currency || "MAD";
+    const currencySymbol = currencyStr === "EUR" ? "€" : currencyStr === "USD" ? "$" : " MAD";
+
+    // Build item rows
+    const itemsHtml = order.cart.map((item: any) => `
+      <tr style="border-bottom: 1px solid #E8DCC6;">
+        <td style="padding: 12px 6px; font-family: 'Georgia', serif; font-size: 13.5px; text-align: left; color: #1E1A16;">
+          <strong>${item.product.name}</strong><br/>
+          <span style="font-size: 10px; color: #A67C52; text-transform: uppercase; font-family: 'Helvetica Neue', Arial, sans-serif;">${item.product.category}</span>
+        </td>
+        <td style="padding: 12px 6px; font-family: monospace; font-size: 13px; text-align: center; color: #6B4E2E;">
+          ${item.quantity}
+        </td>
+        <td style="padding: 12px 6px; font-family: monospace; font-size: 13px; text-align: right; color: #1E1A16; font-weight: bold;">
+          ${item.product.price} ${currencySymbol}
+        </td>
+      </tr>
+    `).join("");
+
+    const customerSubject = isEn 
+      ? `✦ Merakya Ritual Order Confirmation - ${order.id}` 
+      : `✦ Confirmation de votre Rituel Merakya - ${order.id}`;
+
+    const customerHtml = `
+      <div style="background-color: #F7F2EB; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1E1A16; padding: 40px 15px; text-align: center; max-width: 600px; margin: 0 auto; border: 1px solid #E8DCC6;">
+        <!-- Logo Header -->
+        <div style="margin-bottom: 30px; text-align: center;">
+          <h1 style="font-family: 'Georgia', serif; font-size: 28px; font-weight: normal; color: #1E1A16; letter-spacing: 5px; margin: 0; text-transform: uppercase;">MERAKYA</h1>
+          <p style="font-size: 9px; letter-spacing: 3px; color: #A67C52; margin: 5px 0 0 0; text-transform: uppercase;">Rituels Alchimiques du Maroc</p>
+        </div>
+
+        <div style="background-color: #FFFFFF; padding: 35px 25px; border-radius: 2px; border: 1px solid #E8DCC6; text-align: left;">
+          <h2 style="font-family: 'Georgia', serif; font-size: 18px; color: #A67C52; border-bottom: 1px solid #E8DCC6; padding-bottom: 15px; margin-top: 0; font-weight: normal; letter-spacing: 1.2px;">
+            ${isEn ? "Grace & Luminosity," : "Grâce & Luminosité,"}
+          </h2>
+          
+          <p style="font-size: 14.5px; line-height: 1.65; color: #4A453F; font-family: 'Georgia', serif; font-style: italic; margin-bottom: 25px;">
+            ${isEn 
+              ? `Dear ${order.customerName || "Initiate"}, your order has been received at our Marrakech laboratory. Our master artisans are preparing your alchemical compositions and custom rituals with utmost devotion and intention.`
+              : `Chère ${order.customerName || "Initié(e)"}, votre commande d'exception a été reçue avec gratitude. Nos maîtres artisans à l'atelier de Marrakech façonnent déjà et purifient vos soins et rituels sacrés infusés d'énergies bénéfiques.`}
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #A67C52;">
+                <th style="padding: 8px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #A67C52; text-align: left;">${isEn ? "Creation" : "Création"}</th>
+                <th style="padding: 8px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #A67C52; text-align: center;">${isEn ? "Qty" : "Qté"}</th>
+                <th style="padding: 8px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #A67C52; text-align: right;">${isEn ? "Price" : "Prix"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr>
+                <td colspan="2" style="padding: 15px 6px 6px 6px; font-size: 11px; color: #6B4E2E; font-weight: bold; text-align: right; text-transform: uppercase; letter-spacing: 1px;">TOTAL</td>
+                <td style="padding: 15px 6px 6px 6px; font-size: 16px; font-weight: bold; color: #1E1A16; text-align: right; font-family: monospace;">
+                  ${order.totalAmount} ${currencySymbol}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Shipping Coordinates -->
+          <div style="background-color: #F7F2EB; border-left: 3px solid #A67C52; padding: 18px; margin: 25px 0;">
+            <h4 style="margin: 0 0 8px 0; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.5px; color: #A67C52;">${isEn ? "SHIPPING COORDINATES" : "COORDONNÉES DE LIVRAISON"}</h4>
+            <p style="margin: 0; font-size: 13px; font-family: monospace; color: #101010; line-height: 1.5;">
+              <strong>${order.customerName}</strong><br/>
+              ${order.customerAddress}<br/>
+              ${isEn ? "Mobile: " : "Téléphone: "}${order.customerPhone}
+            </p>
+          </div>
+
+          <!-- Celestial Lunar Note -->
+          <div style="border-top: 1px solid #E8DCC6; padding-top: 20px; text-align: center; margin-top: 25px;">
+            <span style="font-size: 13px;">🌒 ✦ 🌘</span>
+            <p style="font-size: 12px; font-family: 'Georgia', serif; font-style: italic; color: #A67C52; margin: 5px 0 0 0; line-height: 1.5;">
+              ${isEn 
+                ? "May this customized ritual bless your sanctuary and bring peace, elevation and sensory alignment."
+                : "Puisse ce rituel sur-mesure bénir votre sanctuaire de lumière, d'élévation et d'alignement sensoriel."}
+            </p>
+          </div>
+        </div>
+
+        <div style="font-size: 10px; color: #A67C52; margin-top: 30px; letter-spacing: 1.5px; line-height: 1.6;">
+          Laboratoires Merakya • Guéliz, Marrakech, Maroc • contact@merakyalab.com<br/>
+          © 2026 MERAKYA INC. Tous droits réservés.
+        </div>
+      </div>
+    `;
+
+    const adminSubject = `🚨 NOUVELLE COMMANDE MERAKYA [${order.id}] - ${order.customerName}`;
+    const adminHtml = `
+      <div style="background-color: #1E1A16; font-family: 'Courier New', Courier, monospace; color: #F7F2EB; padding: 35px 25px; border: 2px solid #A67C52; max-width: 600px; margin: 0 auto; text-align: left;">
+        <h2 style="color: #A67C52; font-size: 18px; border-bottom: 2px solid #A67C52; padding-bottom: 12px; text-transform: uppercase; margin-top: 0; letter-spacing: 2px;">
+          ✦ COMMANDE REÇUE (KENZA CORE) ✦
+        </h2>
+        
+        <p style="font-size: 13px; line-height: 1.5; color: #F7F2EB;">
+          Bonjour Kenza, une nouvelle commande d'exception vient d'être validée sur l'application Merakya. Voici les détails pour la préparation du colis :
+        </p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 12px; color: #F7F2EB;">
+          <thead>
+            <tr style="border-bottom: 1px solid #A67C52; text-align: left;">
+              <th style="padding: 8px 4px; color: #A67C52;">Article</th>
+              <th style="padding: 8px 4px; color: #A67C52; text-align: center;">Qté</th>
+              <th style="padding: 8px 4px; color: #A67C52; text-align: right;">Prix</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.cart.map((item: any) => `
+              <tr style="border-bottom: 1px dashed rgba(166,124,82,0.3);">
+                <td style="padding: 10px 4px;"><strong>${item.product.name}</strong> (${item.product.category})</td>
+                <td style="padding: 10px 4px; text-align: center;">${item.quantity}</td>
+                <td style="padding: 10px 4px; text-align: right; font-weight: bold;">${item.product.price} ${currencySymbol}</td>
+              </tr>
+            `).join("")}
+            <tr>
+              <td colspan="2" style="font-weight: bold; padding: 15px 4px; text-align: right; color: #A67C52;">MONTANT TOTAL :</td>
+              <td style="font-weight: bold; padding: 15px 4px; text-align: right; color: #A67C52; font-size: 15px;">${order.totalAmount} ${currencySymbol}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Client profile and delivery detailed specs -->
+        <div style="background-color: rgba(255,255,255,0.04); padding: 18px; border-left: 3px solid #A67C52; margin-top: 20px; border-radius: 2px;">
+          <h4 style="color: #A67C52; margin: 0 0 8px 0; font-size: 12px; letter-spacing: 1px;">INFORMATIONS DE LIVRAISON CLIENT</h4>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5;">
+            <strong>Nom complet :</strong> ${order.customerName}<br/>
+            <strong>Courriel :</strong> ${order.customerEmail}<br/>
+            <strong>Téléphone :</strong> ${order.customerPhone}<br/>
+            <strong>Adresse :</strong> ${order.customerAddress}<br/>
+            <strong>Méthode de paiement :</strong> ${order.paymentMethod === "card" ? "Carte Bancaire (Stripe Payée)" : "Paiement à la livraison / Cash on Delivery (COD)"}
+          </p>
+        </div>
+
+        <p style="font-size: 11px; text-align: center; color: #888; border-top: 1px solid rgba(166,124,82,0.2); padding-top: 18px; margin-top: 25px; margin-bottom: 0;">
+          Merakya Enterprise Automation Core • Admin : joys.kenza@gmail.com
+        </p>
+      </div>
+    `;
+
+    try {
+      // 1. Dispatch customer receipt email
+      await transporter.sendMail({
+        from: `"Confrérie Merakya ✦" <${smtpUser}>`,
+        to: order.customerEmail,
+        subject: customerSubject,
+        html: customerHtml,
+      });
+
+      // 2. Dispatch admin notification update
+      await transporter.sendMail({
+        from: `"Merakya Boutique Core" <${smtpUser}>`,
+        to: "joys.kenza@gmail.com",
+        subject: adminSubject,
+        html: adminHtml,
+      });
+
+      console.log(`[SMTP] Success! Confirmation emails dispatched to customer (${order.customerEmail}) and admin (${smtpUser})`);
+      return true;
+    } catch (err) {
+      console.error("[SMTP] Core notification dispatch failed:", err);
+      return false;
+    }
+  }
+
+  // API endpoint to orchestrate order receipt dispatches safely
+  app.post("/api/send-order-confirmation", async (req, res) => {
+    try {
+      const { 
+        orderId, 
+        customerName, 
+        customerEmail, 
+        customerPhone, 
+        customerAddress, 
+        cart, 
+        totalAmount, 
+        currency, 
+        paymentMethod,
+        language 
+      } = req.body;
+
+      if (!customerEmail || !cart || !Array.isArray(cart) || cart.length === 0) {
+        return res.status(400).json({ error: "Required fields missing for dispatching mail confirmations." });
+      }
+
+      const orderData = {
+        id: orderId || `MK-${Math.floor(100000 + Math.random() * 900000)}`,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerAddress,
+        cart,
+        totalAmount,
+        currency,
+        paymentMethod
+      };
+
+      const dispatchResult = await sendOrderConfirmationEmail(orderData, language || "FR");
+      return res.json({ success: dispatchResult });
+    } catch (error: any) {
+      console.error("[Email API] Dispatch sequence failure:", error);
+      return res.status(500).json({ error: error.message || "Email dispatch failed internally on server." });
+    }
+  });
+
+
   // Check if Stripe configuration is loaded to dynamically handle the checkout flow layout
   app.get("/api/stripe-config", (req, res) => {
     res.json({
-      publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || null,
+      publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || "pk_live_51TZC1LFsO1Kahb8dfi5Sz64wLwqAygRC7LNel2pfqh1yRM8l4GFYnyzUQqLaezw3GWrLMxYKH5eipwS71dCvrNzc00GzI2kTZx",
       hasStripeSetup: !!process.env.STRIPE_SECRET_KEY
     });
   });

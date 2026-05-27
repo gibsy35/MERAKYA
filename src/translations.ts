@@ -100,14 +100,16 @@ export const translations = {
 
     // notre histoire
     story_title: "L’Origine de Merakya",
-    story_subtitle: "L’histoire d’une rencontre entre deux mondes, deux cultures et une même passion.",
-    story_kicker: "✦ DE LA TERRE AU CŒUR",
-    story_p1: "Merakya est avant tout l’histoire de deux amis de longue date, liés par des valeurs communes et par une même envie : créer quelque chose qui ait du sens. Une envie née du désir de réunir deux univers, deux cultures et deux regards différents sur le monde afin d’en faire une seule et même identité.",
-    story_p2: "De cette rencontre est née une vision : créer une ligne de produits 100 % naturels où l’authenticité des traditions artisanales marocaines dialogue avec les inspirations et les richesses venues d’ailleurs. Une fusion pensée comme un pont entre héritage et ouverture, entre savoir-faire ancestral et influences du monde.",
-    story_p3: "Au cœur de Merakya vivent les trésors que la nature offre depuis des générations : huiles précieuses, plantes aux vertus reconnues, matières nobles et ingrédients soigneusement sélectionnés. Chaque création est réalisée avec exigence et passion, dans le respect des méthodes artisanales qui font la richesse de la culture marocaine.",
-    story_p4: "Nos bougies sont coulées à la main en petites séries, tandis que nos savons premium sont élaborés selon un procédé traditionnel de saponification à froid permettant de préserver toute la qualité et les bienfaits naturels des ingrédients utilisés.",
-    story_p5: "Pour nous, Merakya est bien plus qu’une marque. C’est une histoire d’amitié, de transmission et de partage. Une invitation à découvrir des créations où chaque détail porte une intention : celle de rapprocher les cultures, valoriser l’artisanat et célébrer la beauté du naturel.",
-    story_p6: "Parce que lorsque deux mondes se rencontrent avec passion et authenticité, ils créent quelque chose d’unique.",
+    story_subtitle: "D’un chemin de transformation, d’une quête intérieure et d’une renaissance.",
+    story_kicker: "✦ DE L’ÂME À LA MATIÈRE",
+    story_p1: "MERAKYA est née d’un chemin de transformation. D’une quête intérieure. D’un besoin profond de redonner du sens, de la douceur et de l’âme à ce que nous créons et à ce que nous consommons.",
+    story_p2: "Pendant des années, j’ai cherché à comprendre l’être humain au-delà des apparences. Les blessures invisibles. Les émotions enfouies. Les mémoires que le corps porte en silence. Cette recherche m’a menée vers l’hypnose, la guérison émotionnelle, les plantes, les rituels ancestraux, les médecines anciennes et tout ce qui reconnecte l’humain à lui-même.",
+    story_p3: "MERAKYA est née de cette fusion. Chaque création est pensée comme une expérience. Pas simplement un produit. Mais un moment pour ralentir. Respirer. Se retrouver. Revenir à soi.",
+    story_p4: "Les bougies sont infusées d’intentions. Les plantes racontent des histoires oubliées. Les huiles, les savons, les élixirs et les rituels sont créés avec conscience, intuition et respect du vivant.",
+    story_p5: "Dans un monde qui va trop vite, MERAKYA invite à revenir à l’essentiel. À recréer du sacré dans le quotidien. À transformer les gestes simples en instants de présence.",
+    story_p6: "MERAKYA porte aussi une vision plus grande : celle de réunir le savoir ancien et les outils modernes dans un univers accessible, esthétique, profond et vivant. Un espace où la spiritualité rencontre la beauté. Où la science rencontre l’énergie. Où le bien-être devient un art de vivre.",
+    story_p7: "Chaque détail est créé avec le cœur. Chaque collection porte une vibration. Et derrière chaque création, il y a une histoire vraie. Une renaissance. Une alchimie entre l’âme et la matière.",
+    story_p8: "Bienvenue dans l’univers MERAKYA.",
 
     // contact
     contact_title: "Prendre Contact",
@@ -285,14 +287,16 @@ export const translations = {
 
     // notre histoire
     story_title: "The Origin of Merakya",
-    story_subtitle: "The story of a meeting between two worlds, two cultures, and one shared passion.",
-    story_kicker: "✦ FROM THE SOIL TO THE SOUL",
-    story_p1: "Merakya is first and foremost the story of two longtime friends, bound by shared values and a single desire: to create something that holds true meaning. A desire born from the ambition to unite two universes, two cultures, and two distinct perspectives on the world, blending them into a single, cohesive identity.",
-    story_p2: "From this encounter arose a vision: to design a 100% natural product line where the authenticity of Moroccan artisanal traditions speaks with inspirations and riches from afar. A fusion conceived as a bridge between heritage and openness, ancestral know-how, and worldly influences.",
-    story_p3: "At the heart of Merakya rest the natural treasures that nature has gifted for generations: rare oils, plants with recognized virtues, noble raw materials, and components gathered with absolute care. Every creation is crafted with excellence and passion, honoring artisanal methods that define the richness of Moroccan culture.",
-    story_p4: "Our candles are hand-poured in small batches, while our premium botanical soaps are made using traditional cold saponification methods, preserving the natural qualities and wholesome benefits of every ingredient used.",
-    story_p5: "To us, Merakya is far more than a brand. It is a story of warm friendship, passing on traditions, and sharing. An invitation to experience custom creations where every detail carries an intention: to bring cultures closer, highlight heritage craftsmanship, and celebrate natural beauty.",
-    story_p6: "Because when two worlds meet with genuine passion and authenticity, they compose something truly unique.",
+    story_subtitle: "From a path of transformation, an inner quest and a rebirth.",
+    story_kicker: "✦ FROM SOUL TO MATTER",
+    story_p1: "MERAKYA was born from a path of transformation. Of an inner quest. Of a deep-seated need to restore meaning, softness, and soul to what we create and what we consume.",
+    story_p2: "For years, I sought to understand the human being beyond appearances. Invisible wounds. Buried emotions. The memories the body carries in silence. This search led me to hypnosis, emotional healing, plants, ancestral rituals, ancient medicines, and everything that reconnects humans with themselves.",
+    story_p3: "MERAKYA was born from this fusion. Each creation is designed as an experience. Not just a product. But a moment to slow down. Breathe. Find oneself. Return to the essential self.",
+    story_p4: "Candles are infused with intentions. Plants tell forgotten stories. Oils, soaps, elixirs, and rituals are created with awareness, intuition, and respect for all living things.",
+    story_p5: "In a world that moves too fast, MERAKYA invites you to return to the essential. To recreate the sacred in daily life. To transform simple gestures into moments of absolute presence.",
+    story_p6: "MERAKYA also carries a larger vision: that of uniting ancient wisdom and modern tools in an accessible, aesthetic, profound, and living universe. A space where spirituality meets beauty. Where science meets energy. Where well-being becomes an art of living.",
+    story_p7: "Every detail is created from the heart. Each collection carries a vibration. And behind every creation, there is a true story. A rebirth. An alchemy between soul and matter.",
+    story_p8: "Welcome to the MERAKYA universe.",
 
     // contact
     contact_title: "Get in Touch",

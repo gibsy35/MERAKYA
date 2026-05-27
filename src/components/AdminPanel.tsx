@@ -209,7 +209,7 @@ export default function AdminPanel({
         body: JSON.stringify({
           amount: 150,
           currency: currencyTest,
-          email: 'test-admin@merakya.com',
+          email: 'joys.kenza@gmail.com',
           customerName: 'Merakya Admin Testing Core'
         })
       });
@@ -495,7 +495,7 @@ export default function AdminPanel({
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@merakya.com"
+                  placeholder="joys.kenza@gmail.com"
                   className="w-full bg-white border border-[#E8DCC6] p-3 text-xs text-[#1E1A16] placeholder-gray-400 focus:outline-none focus:border-[#A67C52]"
                 />
               </div>
@@ -2116,7 +2116,7 @@ export default function AdminPanel({
               <div>
                 <label className="block text-[9px] font-bold tracking-widest uppercase text-[#A67C52] mb-1">E-mail Client Test</label>
                 <div className="bg-white p-2.5 rounded-xs border border-[#E8DCC6] text-xs truncate text-[#1E1A16]">
-                  test-admin@merakya.com
+                  joys.kenza@gmail.com
                 </div>
               </div>
 

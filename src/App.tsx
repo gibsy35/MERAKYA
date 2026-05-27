@@ -27,8 +27,160 @@ import { Language, translations, PRODUCT_TRANSLATIONS, ARTICLE_TRANSLATIONS, REV
 import { 
   Sparkles, Compass, Leaf, Heart, Sun, ArrowRight, 
   MapPin, CheckCircle, CreditCard, Box, Gift, Headphones,
-  Mail, Calendar, Lock, Instagram, Facebook, Share2, Twitter, Link, Check, X
+  Mail, Calendar, Lock, Instagram, Facebook, Share2, Twitter, Link, Check, X,
+  Volume2, VolumeX, Save, BookOpen, Trash
 } from 'lucide-react';
+
+// Core Web Audio API synth singleton to keep state clean across renders
+let audioCtx: AudioContext | null = null;
+let carrierOsc: OscillatorNode | null = null;
+let modOsc: OscillatorNode | null = null;
+let filterNode: BiquadFilterNode | null = null;
+let gainNode: GainNode | null = null;
+
+const initBreathingSynth = () => {
+  if (audioCtx) return;
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextClass) return;
+  
+  audioCtx = new AudioContextClass();
+  
+  // Carrier oscillator (warm low drone)
+  carrierOsc = audioCtx.createOscillator();
+  carrierOsc.type = 'triangle';
+  carrierOsc.frequency.setValueAtTime(110, audioCtx.currentTime); // A2 fundamental
+  
+  // Modulator oscillator for beautiful chorus vibrato
+  modOsc = audioCtx.createOscillator();
+  modOsc.type = 'sine';
+  modOsc.frequency.setValueAtTime(0.5, audioCtx.currentTime); // 0.5Hz LFO
+  
+  const modGain = audioCtx.createGain();
+  modGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+  
+  // Connect modulator to carrier frequency
+  modOsc.connect(modGain);
+  modGain.connect(carrierOsc.frequency);
+  
+  // Resonance low-pass filter
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'lowpass';
+  filterNode.frequency.setValueAtTime(250, audioCtx.currentTime);
+  filterNode.Q.setValueAtTime(3.0, audioCtx.currentTime);
+  
+  // Gain stage
+  gainNode = audioCtx.createGain();
+  gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Start fully silent
+  
+  // Hook everything up
+  carrierOsc.connect(filterNode);
+  filterNode.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  // Start oscillators safely
+  carrierOsc.start();
+  modOsc.start();
+};
+
+const updateBreathingSynth = (phase: 'Inhale' | 'Hold' | 'Exhale', isEnabled: boolean) => {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  const now = audioCtx.currentTime;
+  
+  if (!isEnabled) {
+    if (gainNode) {
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+    }
+    return;
+  }
+  
+  if (!gainNode || !filterNode || !carrierOsc) return;
+  
+  gainNode.gain.cancelScheduledValues(now);
+  filterNode.frequency.cancelScheduledValues(now);
+  carrierOsc.frequency.cancelScheduledValues(now);
+  
+  if (phase === 'Inhale') {
+    // Gradual opening of filter, pitch rises gently from A2 (110Hz) to C#3 (138.6Hz)
+    gainNode.gain.linearRampToValueAtTime(0.35, now + 4.0); // 4 seconds duration
+    filterNode.frequency.exponentialRampToValueAtTime(800, now + 4.0);
+    carrierOsc.frequency.linearRampToValueAtTime(138.6, now + 4.05);
+  } else if (phase === 'Hold') {
+    // Sustain high lush vibrating sound
+    gainNode.gain.linearRampToValueAtTime(0.28, now + 1.0);
+    filterNode.frequency.exponentialRampToValueAtTime(650, now + 1.0);
+    // Add brief resonant chime highlight for celestial feel
+    playCelestialChime(440); // A4 crystal ring
+    playCelestialChime(554.37); // C#5 crystal ring
+  } else if (phase === 'Exhale') {
+    // Beautiful fade out down of pitch and volume
+    gainNode.gain.linearRampToValueAtTime(0.02, now + 8.0); // 8 seconds duration
+    filterNode.frequency.exponentialRampToValueAtTime(200, now + 8.0);
+    carrierOsc.frequency.linearRampToValueAtTime(110.0, now + 8.0);
+  }
+};
+
+const playCelestialChime = (freq: number) => {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  
+  // Create quick delicate chime
+  const osc = audioCtx.createOscillator();
+  const chimeGain = audioCtx.createGain();
+  
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, now);
+  
+  chimeGain.gain.setValueAtTime(0.08, now);
+  chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5); // long chime decay
+  
+  osc.connect(chimeGain);
+  chimeGain.connect(audioCtx.destination);
+  
+  osc.start(now);
+  osc.stop(now + 2.6);
+};
+
+const stopBreathingSynth = () => {
+  if (gainNode && audioCtx) {
+    const now = audioCtx.currentTime;
+    gainNode.gain.cancelScheduledValues(now);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+  }
+};
+
+const playOracleChime = () => {
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextClass) return;
+  
+  const ctx = new AudioContextClass();
+  const now = ctx.currentTime;
+  
+  // Arpeggio of 4 notes starting beautiful sequence: A4 -> C#5 -> E5 -> A5
+  const notes = [440.00, 554.37, 659.25, 880.00];
+  
+  notes.forEach((freq, idx) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+    
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.08, now + idx * 0.12 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 2.0);
+    
+    osc.connect(g);
+    g.connect(ctx.destination);
+    
+    osc.start(now + idx * 0.12);
+    osc.stop(now + idx * 0.12 + 2.1);
+  });
+};
 
 export default function App() {
   // State variables synchronized with user requirements
@@ -158,6 +310,43 @@ export default function App() {
     return translations[language][key] || translations['FR'][key] || '';
   };
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
+  // Synchronize Wishlist based on active logged-in member session
+  useEffect(() => {
+    const savedClient = localStorage.getItem('merakya_logged_client');
+    if (savedClient) {
+      const parsed = JSON.parse(savedClient);
+      const userWishlistKey = `merakya_wishlist_${parsed.email}`;
+      const stored = localStorage.getItem(userWishlistKey);
+      setWishlist(stored ? JSON.parse(stored) : []);
+    } else {
+      setWishlist([]);
+    }
+  }, [isAuthModalOpen]);
+
+  const handleToggleWishlist = (product: Product) => {
+    const savedClient = localStorage.getItem('merakya_logged_client');
+    if (!savedClient) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    const parsed = JSON.parse(savedClient);
+    const userWishlistKey = `merakya_wishlist_${parsed.email}`;
+    const stored = localStorage.getItem(userWishlistKey);
+    let list: string[] = stored ? JSON.parse(stored) : [];
+    
+    if (list.includes(product.id)) {
+      list = list.filter(id => id !== product.id);
+    } else {
+      list = [...list, product.id];
+    }
+    
+    localStorage.setItem(userWishlistKey, JSON.stringify(list));
+    setWishlist(list);
+  };
+
   const [journalTab, setJournalTab] = useState<'all' | 'chroniques' | 'presse'>('all');
   
   // Boutique filter options
@@ -185,6 +374,22 @@ export default function App() {
   const [isBreathingActive, setIsBreathingActive] = useState(false);
   const [breathingPhase, setBreathingPhase] = useState<'Inhale' | 'Hold' | 'Exhale'>('Inhale');
   const [breathingSec, setBreathingSec] = useState(4);
+  const [isBreathingSoundEnabled, setIsBreathingSoundEnabled] = useState(false);
+
+  // Oracle Intention Journal state
+  const [intentionJournal, setIntentionJournal] = useState<{ id: string; date: string; titleFr: string; titleEn: string; descFr: string; descEn: string; gemFr: string; gemEn: string; note: string }[]>(() => {
+    const saved = localStorage.getItem('merakya_intention_journal');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Unique feedback toast
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => {
+      setToastMsg(null);
+    }, 4500);
+  };
 
   useEffect(() => {
     if (!isBreathingActive) {
@@ -213,6 +418,16 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [isBreathingActive, breathingPhase]);
+
+  // Sync breathing phase with Web Audio sound generator
+  useEffect(() => {
+    if (isBreathingActive && isBreathingSoundEnabled) {
+      initBreathingSynth();
+      updateBreathingSynth(breathingPhase, true);
+    } else {
+      stopBreathingSynth();
+    }
+  }, [isBreathingActive, breathingPhase, isBreathingSoundEnabled]);
 
   // Article translation helper
   const getArticleTrans = (art: any) => {
@@ -313,6 +528,24 @@ export default function App() {
         if (prev.some(o => o.id === newOrder.id)) return prev;
         return [newOrder, ...prev];
       });
+
+      // Automated SMTP Email Notification Dispatcher for Stripe Orders
+      fetch('/api/send-order-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: newOrder.id,
+          customerName: customerDetails.customerName,
+          customerEmail: customerDetails.customerEmail,
+          customerPhone: customerDetails.customerPhone,
+          customerAddress: customerDetails.customerAddress,
+          cart: cartItems,
+          totalAmount: totalAmount,
+          currency: selectedCurrency,
+          paymentMethod: 'card',
+          language: language
+        })
+      }).catch(err => console.warn("Mailing background delivery skipped in simulated state:", err));
 
       // Reset local cart & details
       setCart([]);
@@ -464,6 +697,14 @@ export default function App() {
 
   return (
     <div className="bg-[#F7F2EB] text-[#1E1A16] font-sans antialiased min-h-screen Selection:bg-[#A67C52]/20 select-text">
+      
+      {/* Premium Alchemy Floating Toast Message */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#1E1A16] border border-[#A67C52] text-[#F7F2EB] py-3.5 px-5 rounded-xs shadow-2xl max-w-sm text-xs tracking-wider flex items-center gap-2.5 animate-fade-in">
+          <Sparkles className="h-4.5 w-4.5 text-[#A67C52] animate-pulse shrink-0" />
+          <p className="font-serif italic font-light leading-relaxed">{toastMsg}</p>
+        </div>
+      )}
       
       {/* Dynamic Navigation bar */}
       <Navbar 
@@ -717,7 +958,7 @@ export default function App() {
               </section>
 
               {/* RE-CREATE PHILOSOPHY PORT BLOCK */}
-              <section className="bg-[#E8DCC6]/25 border-t border-[#E8DCC6] py-16 px-4 md:px-12">
+              <section className="bg-[#DFD1B8]/30 border-t border-[#DFD1B8]/60 py-16 px-4 md:px-12">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                   
                   {/* Left explanation text info */}
@@ -765,46 +1006,19 @@ export default function App() {
 
                   {/* Right Arched doorway elements & decorative geometry layout */}
                   <div className="lg:col-span-7 relative">
-                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-xl bg-[#1E1A16]/80 backdrop-blur-md p-8 flex flex-col justify-center items-center text-center">
+                    <div className="relative aspect-video sm:aspect-square md:aspect-[16/10] lg:aspect-[4/3] w-full rounded-sm overflow-hidden shadow-xl bg-[#14110E] border border-[#A67C52]/10 p-8 flex flex-col justify-center items-center text-center">
                       
                       {/* Subtly animated background glow */}
-                      <div className="absolute inset-0 bg-radial from-[#3D2C1E]/60 via-[#1E1A16]/70 to-[#1E1A16]/80 opacity-75" />
+                      <div className="absolute inset-0 bg-radial from-[#241B13]/65 via-[#14110E]/80 to-[#14110E]/95 opacity-85" />
 
-                      {/* Giant Interactive Golden Star Mandala */}
-                      <div className="relative w-44 h-44 sm:w-56 sm:h-56 opacity-85 select-none pointer-events-none mb-4 flex items-center justify-center">
-                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-[#A67C52] animate-[spin_120s_linear_infinite]">
-                          {/* Outer dotted orbit */}
-                          <circle cx="50" cy="50" r="47" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 2" />
-                          <circle cx="50" cy="50" r="44" stroke="currentColor" strokeWidth="0.75" />
-                          
-                          {/* Star quadrants indicators */}
-                          <circle cx="20" cy="50" r="1.5" fill="currentColor" />
-                          <circle cx="80" cy="50" r="1.5" fill="currentColor" />
-                          <circle cx="50" cy="20" r="1.5" fill="currentColor" />
-                          <circle cx="50" cy="80" r="1.5" fill="currentColor" />
-                          
-                          {/* Main 8-pointed star */}
-                          <path d="M50 5 L64 36 L95 50 L64 64 L50 95 L36 64 L5 50 L36 36 Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
-                          
-                          {/* Inner square systems */}
-                          <rect x="22" y="22" width="56" height="56" stroke="currentColor" strokeWidth="0.5" />
-                          <rect x="22" y="22" width="56" height="56" stroke="currentColor" strokeWidth="0.5" transform="rotate(45 50 50)" />
-                          
-                          {/* Central sanctuary circle */}
-                          <circle cx="50" cy="50" r="16" fill="#1E1A16" stroke="currentColor" strokeWidth="1" />
-                        </svg>
-                        
-                        {/* Glowing "M" in the very center, positioned absolutely to remain upright */}
-                        <div className="absolute flex items-center justify-center">
-                          <span className="font-serif text-[#E8DCC6] text-3xl font-normal lowercase select-none tracking-normal pr-0.5 pb-0.5">
-                            m
-                          </span>
-                        </div>
+                      {/* Alchemical Brand Logo Seal */}
+                      <div className="relative w-44 h-44 sm:w-56 sm:h-56 select-none mb-4 flex items-center justify-center">
+                        <SpiritualLogo size={180} className="text-[#A67C52] animate-[spin_180s_linear_infinite]" />
                       </div>
 
                       {/* Spiritual Quote on top of mandala */}
                       <div className="relative z-10 max-w-sm space-y-3">
-                        <p className="font-serif italic text-base sm:text-lg leading-relaxed text-[#F7F2EB] pt-1 pt-1">
+                        <p className="font-serif italic text-base sm:text-lg leading-relaxed text-[#F7F2EB] pt-1">
                           {language === 'EN' 
                             ? '"Each ritual is a secret dialogue between the soul of nature and your own inner light."'
                             : '"Chaque rituel est un dialogue secret entre l’âme de la nature et votre propre lumière intérieure."'}
@@ -1009,6 +1223,8 @@ export default function App() {
                       onAddToCart={handleAddToCart}
                       selectedCurrency={selectedCurrency}
                       language={language}
+                      isWishlisted={wishlist.includes(product.id)}
+                      onToggleWishlist={handleToggleWishlist}
                     />
                   ))}
                 </div>
@@ -1401,6 +1617,35 @@ export default function App() {
                       </div>
                     </div>
  
+                    {/* Speaker Sound Toggle */}
+                    <div className="flex items-center justify-between bg-white/[0.03] border border-[#A67C52]/20 p-2.5 rounded-xs">
+                      <span className="text-[10.5px] text-[#E8DCC6]/80 font-sans font-light">
+                        {language === 'EN' ? "Acoustic Sound Healing (528Hz)" : "Sonothérapie alchimique (528Hz)"}
+                      </span>
+                      <button
+                        onClick={() => {
+                          const nowEnabled = !isBreathingSoundEnabled;
+                          if (nowEnabled) {
+                            initBreathingSynth();
+                            playCelestialChime(528); // Play the sacred transformation solfeggio tone
+                            triggerToast(language === 'EN' 
+                              ? "✦ Sacred 528 Hz transformation chime ignited for your practice ✦" 
+                              : "✦ Fréquence sacrée de transformation 528 Hz activée pour votre pratique ✦"
+                            );
+                          }
+                          setIsBreathingSoundEnabled(nowEnabled);
+                        }}
+                        className={`p-1.5 rounded-full border transition-all ${
+                          isBreathingSoundEnabled 
+                            ? 'bg-[#A67C52] border-[#A67C52] text-white shadow-md' 
+                            : 'bg-transparent text-[#E8DCC6]/60 border-[#E8DCC6]/20 hover:text-white hover:border-white'
+                        }`}
+                        title={language === 'EN' ? "Toggle ambient sensory audio" : "Activer/Désactiver le son sensoriel"}
+                      >
+                        {isBreathingSoundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+
                     {/* Operational action button */}
                     <button
                       onClick={() => setIsBreathingActive(!isBreathingActive)}
@@ -1497,6 +1742,7 @@ export default function App() {
                             ];
                             const random = cards[Math.floor(Math.random() * cards.length)];
                             setActiveOracleCard(random);
+                            playOracleChime(); // Play beautiful arpeggio sound effect
                           }}
                           className="w-full max-w-[140px] bg-[#1E1A16] border border-[#A67C52] rounded-md shadow-lg hover:border-[#F7F2EB] flex flex-col justify-between text-center p-4 text-[#F7F2EB] hover:scale-105 transition-all group cursor-pointer h-48"
                         >
@@ -1511,14 +1757,107 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* Reset draw buttons */}
+                    {/* Action buttons under drawn card */}
                     {activeOracleCard && (
-                      <button
-                        onClick={() => setActiveOracleCard(null)}
-                        className="text-[10px] uppercase font-bold tracking-widest text-[#A67C52] hover:text-[#1E1A16] underline block mx-auto text-center font-sans"
-                      >
-                        {language === 'EN' ? "Draw another thought ✦" : "Tirer une autre pensée ✦"}
-                      </button>
+                      <div className="flex flex-col gap-2 pt-2 text-center">
+                        <button
+                          onClick={() => {
+                            if (!activeOracleCard) return;
+                            const alreadySaved = intentionJournal.some(item => item.titleFr === activeOracleCard.titleFr);
+                            if (alreadySaved) {
+                              triggerToast(language === 'EN' ? "✦ Already present in your logs ✦" : "✦ Cette intention est déjà consignée ✦");
+                              return;
+                            }
+                            const newLog = {
+                              id: 'journal-' + Date.now(),
+                              date: new Date().toLocaleDateString(language === 'EN' ? 'en-US' : 'fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }),
+                              titleFr: activeOracleCard.titleFr,
+                              titleEn: activeOracleCard.titleEn,
+                              descFr: activeOracleCard.descFr,
+                              descEn: activeOracleCard.descEn,
+                              gemFr: activeOracleCard.gemFr,
+                              gemEn: activeOracleCard.gemEn,
+                              note: ''
+                            };
+                            const updated = [newLog, ...intentionJournal];
+                            setIntentionJournal(updated);
+                            localStorage.setItem('merakya_intention_journal', JSON.stringify(updated));
+                            triggerToast(language === 'EN' 
+                              ? "✦ Sealed with light in your Intention Journal ✦" 
+                              : "✦ Consignée avec bienveillance dans votre Journal d'Intentions ✦"
+                            );
+                          }}
+                          className="w-full bg-[#1E1A16] hover:bg-stone-900 border border-[#A67C52] text-white text-[10px] uppercase font-bold tracking-widest py-2.5 rounded-xs flex items-center justify-center gap-1.5 transition-all outline-none"
+                        >
+                          <Save className="h-3.5 w-3.5 text-[#A67C52]" />
+                          {language === 'EN' ? "Seal in My Journal" : "Consigner dans mon Journal"}
+                        </button>
+                        
+                        <button
+                          onClick={() => setActiveOracleCard(null)}
+                          className="text-[10px] uppercase font-bold tracking-widest text-[#A67C52] hover:text-[#1E1A16] underline block mx-auto text-center font-sans tracking-wide mt-1"
+                        >
+                          {language === 'EN' ? "Draw another thought ✦" : "Tirer une autre pensée ✦"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Historical past logs section */}
+                    {intentionJournal.length > 0 && (
+                      <div className="border-t border-[#E8DCC6]/60 pt-4 mt-5 space-y-3">
+                        <div className="flex items-center justify-between text-[#1E1A16]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            <BookOpen className="h-3.5 w-3.5 text-[#A67C52]" />
+                            {language === 'EN' ? "My Intention Logs" : "Mon Journal Divin"} ({intentionJournal.length})
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (confirm(language === 'EN' ? "Clear all historical intentions?" : "Effacer tout votre journal d'affirmations ?")) {
+                                setIntentionJournal([]);
+                                localStorage.removeItem('merakya_intention_journal');
+                                triggerToast(language === 'EN' ? "Journal cleared" : "Journal effacé");
+                              }
+                            }}
+                            className="text-[9px] uppercase tracking-wider text-red-600 hover:text-red-800 transition-colors font-semibold"
+                          >
+                            {language === 'EN' ? "Clear" : "Effacer"}
+                          </button>
+                        </div>
+                        
+                        <div className="max-h-36 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {intentionJournal.map((item) => (
+                            <div key={item.id} className="bg-white/55 border border-[#E8DCC6]/60 p-2.5 rounded-sm text-left relative group">
+                              <button
+                                onClick={() => {
+                                  const filtered = intentionJournal.filter(x => x.id !== item.id);
+                                  setIntentionJournal(filtered);
+                                  localStorage.setItem('merakya_intention_journal', JSON.stringify(filtered));
+                                }}
+                                className="absolute top-1.5 right-1.5 text-stone-400 hover:text-red-600 transition-opacity p-0.5"
+                                title="Supprimer"
+                              >
+                                <Trash className="h-3 w-3" />
+                              </button>
+                              
+                              <span className="text-[8px] text-gray-400 font-mono block mb-1">{item.date}</span>
+                              <h6 className="font-serif text-[11px] font-bold text-[#1E1A16] uppercase tracking-wide">
+                                {language === 'EN' ? item.titleEn : item.titleFr}
+                              </h6>
+                              <p className="text-[9.5px] text-gray-600 leading-normal italic font-light mt-0.5">
+                                "{language === 'EN' ? item.descEn : item.descFr}"
+                              </p>
+                              <div className="text-[8px] text-[#A67C52] font-mono mt-1 uppercase font-semibold">
+                                ✦ {language === 'EN' ? "EMPOWERED GEM:" : "CRISTAL LIÉ :"} {language === 'EN' ? item.gemEn : item.gemFr}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                   </div>
@@ -2017,12 +2356,21 @@ export default function App() {
                 <p>
                   {t('story_p5')}
                 </p>
-                <p className="font-serif italic text-base md:text-lg text-[#A67C52] text-center pt-4 tracking-wide">
-                  « {t('story_p6')} »
+                <p>
+                  {t('story_p6')}
                 </p>
-                <p className="text-right pt-4 font-serif italic text-sm text-[#A67C52] tracking-wider font-semibold">
-                  {language === 'EN' ? "KENZA & JEAN-BAPTISTE" : "KENZA et JEAN-BAPTISTE"}
+                <p>
+                  {t('story_p7')}
                 </p>
+                <div className="text-center pt-8 pb-4 space-y-3">
+                  <p className="font-serif italic text-base md:text-lg text-[#1E1A16] font-medium tracking-wide">
+                    {t('story_p8')}
+                  </p>
+                  <div className="w-12 h-[1px] bg-[#A67C52]/30 mx-auto" />
+                  <p className="font-serif italic text-lg md:text-xl text-[#A67C52] tracking-[0.15em] pt-2">
+                    "Where soul inspires matter"
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -2317,6 +2665,11 @@ export default function App() {
           setIsAdminActive(true);
         }}
         language={language}
+        products={products}
+        wishlist={wishlist}
+        onToggleWishlist={handleToggleWishlist}
+        onAddToCart={handleAddToCart}
+        selectedCurrency={selectedCurrency}
       />
 
       {/* HELP AND INQUIRIES SECTIONS POPUP MODAL */}

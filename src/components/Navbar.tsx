@@ -1,8 +1,75 @@
-import React from 'react';
-import { Search, User, ShoppingBag, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, User, ShoppingBag, Menu, X, Sparkles, Moon } from 'lucide-react';
 import { CartItem, CurrencyCode, CURRENCIES } from '../types';
 import SpiritualLogo from './SpiritualLogo';
 import { Language, translations } from '../translations';
+
+const getMoonPhase = (date: Date) => {
+  const lp = 2551443; // synodic period in seconds (29.53059 days)
+  const new_moon = new Date(1970, 0, 7, 20, 35, 0); // precise base reference new moon
+  const phase = ((date.getTime() - new_moon.getTime()) / 1000) % lp;
+  let fraction = phase / lp; // 0 to 1
+  if (fraction < 0) fraction += 1.0;
+  
+  let labelFr = "";
+  let labelEn = "";
+  let icon = ""; 
+  let ritualFr = "";
+  let ritualEn = "";
+  const illumination = Math.round(100 * (1 - Math.abs(fraction - 0.5) * 2));
+
+  if (fraction < 0.06 || fraction >= 0.94) {
+    labelFr = "Nouvelle Lune";
+    labelEn = "New Moon";
+    icon = "🌑";
+    ritualFr = "Le ciel nocturne est plongé dans l'obscurité fertile. C'est le début d'un nouveau cycle céleste. Prenez un instant pour allumer votre Bougie de Purification, écrivez vos intentions sur un carnet et laissez la clarté guider vos pensées.";
+    ritualEn = "The night sky is cast in fertile darkness. It is the beginning of a fresh celestial cycle. Take a moment to light your Purification Candle, write your intentions down, and let clear vision guide your path.";
+  } else if (fraction >= 0.06 && fraction < 0.21) {
+    labelFr = "Premier Croissant";
+    labelEn = "Waxing Crescent";
+    icon = "🌒";
+    ritualFr = "La lumière renaît doucement au-dessus des montagnes de l'Atlas. C'est le moment idéal pour cultiver vos projets naissants. Allumez votre Bougie d'Abondance et visualisez vos aspirations fleurir pas à pas.";
+    ritualEn = "Light is gently reborn over the Atlas ridges. This is the optimal time to nurture your nascent projects. Light your Abundance Candle and visualize your aspirations blooming step by step.";
+  } else if (fraction >= 0.21 && fraction < 0.35) {
+    labelFr = "Premier Quartier";
+    labelEn = "First Quarter";
+    icon = "🌓";
+    ritualFr = "La lune se tient exactement à l'équilibre du jour et de la nuit. C'est une période de courage et d'alignement. Accompagnez ce passage d'un rituel de respiration pranayama pour surmonter les blocages intérieurs et calmer le stress.";
+    ritualEn = "The moon stands in the precise balance of light and dark. A period of courage and alignment. Accompany this cosmic balance with a slow pranayama breathing ritual to dissolve internal obstacles and lower cortisol.";
+  } else if (fraction >= 0.35 && fraction < 0.44) {
+    labelFr = "Lune Gibbeuse Croissante";
+    labelEn = "Waxing Gibbous";
+    icon = "🌔";
+    ritualFr = "La lune s'arrondit et l'énergie cosmique s'intensifie. Concentrez-vous sur la persévérance. Écoutez le chant des rituels de l'Atlas pour calmer le mental et focaliser votre énergie sacrée.";
+    ritualEn = "The moon rounds out, compounding cosmic energy. Cultivate absolute focus and determination. Listen to the Atlas singing bells to pacify mental chatter and focus your sacred energy.";
+  } else if (fraction >= 0.44 && fraction < 0.56) {
+    labelFr = "Pleine Lune";
+    labelEn = "Full Moon";
+    icon = "🌕";
+    ritualFr = "La lune brille de tout son éclat au zénith. Énergie créatrice à son apogée. Allumez votre Bougie de Régénération pour dissiper les énergies stagnantes, purifier vos cristaux et célébrer la complétude de votre être.";
+    ritualEn = "The moon shines at its absolute peak in the zenith. Creative energy is vibrating at maximum. Ignite your Regeneration Candle to release heavy emotions, purify your gems, and celebrate your completeness.";
+  } else if (fraction >= 0.56 && fraction < 0.69) {
+    labelFr = "Lune Gibbeuse Décroissante";
+    labelEn = "Waning Gibbous";
+    icon = "🌖";
+    ritualFr = "L'heure est à l'assimilation des apprentissages et au partage. Offrez-vous un soin corporel d'exception avec l'huile botanique Merakya, en massant doucement votre peau pour intégrer l'alchimie du jour.";
+    ritualEn = "The cosmic tide is shifting to integration and generous sharing. Treat your temple to an exceptional botanical care routine with Merakya oils, massaging your skin gently to absorb today's alchemy.";
+  } else if (fraction >= 0.69 && fraction < 0.81) {
+    labelFr = "Dernier Quartier";
+    labelEn = "Last Quarter";
+    icon = "🌗";
+    ritualFr = "Le temps des bilans et du détachement est venu. Libérez-vous de ce qui ne vous sert plus. Respirez en relâchant les tensions accumulées dans les épaules pour balayer l'inutile.";
+    ritualEn = "The season for reflection and release is upon us. Untangle yourself from what no longer elevates you. Practice conscious breathing to shed accumulated stress from your physical body.";
+  } else {
+    labelFr = "Dernier Croissant";
+    labelEn = "Waning Crescent";
+    icon = "🌘";
+    ritualFr = "La lune s'efface pour préparer le renouveau. Ce soir, la lune est descendante. Allumez votre bougie préférée sous un ciel étoilé et offrez-vous un silence sacré de 5 minutes pour reconnecter à l'essentiel.";
+    ritualEn = "The moon fades gently, preparing for quiet renewal. Tonight, the moon is declining. Light your favorite candle under the starry sky and enjoy 5 minutes of sacred silence to realign with the source.";
+  }
+
+  return { labelFr, labelEn, icon, ritualFr, ritualEn, illumination };
+};
 
 interface NavbarProps {
   cart: CartItem[];
@@ -32,6 +99,8 @@ export default function Navbar({
   onLanguageChange
 }: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isMoonOpen, setIsMoonOpen] = React.useState(false);
+  const moonData = getMoonPhase(new Date());
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   // Translation helper
@@ -169,6 +238,19 @@ export default function Navbar({
 
           {/* Interactive Icons */}
           <div className="flex items-center space-x-3 md:space-x-5">
+            {/* Elegant Genuine Lunar Indicator */}
+            <button 
+              id="btn-lunar-nav"
+              onClick={() => setIsMoonOpen(true)}
+              className="flex items-center gap-1.5 p-1 text-[#1E1A16] hover:text-[#A67C52] transition-colors relative group font-sans font-semibold text-xs leading-none"
+              title={selectedLanguage === 'EN' ? "Lunar Calendar & Rituals" : "Calendrier Lunaire & Rituels"}
+            >
+              <span className="text-sm md:text-base animate-pulse">{moonData.icon}</span>
+              <span className="hidden sm:inline-block text-[8px] md:text-[9px] tracking-widest uppercase text-[#A67C52]">
+                {selectedLanguage === 'EN' ? moonData.labelEn : moonData.labelFr}
+              </span>
+            </button>
+
             <button 
               id="btn-search-nav"
               onClick={() => { if(isAdminActive) onAdminToggle(); onNavigate('boutique'); }}
@@ -261,7 +343,7 @@ export default function Navbar({
                 </select>
               </div>
 
-              {/* Mobile Language Selection Helper */}
+               {/* Mobile Language Selection Helper */}
               <div className="border-t border-[#E8DCC6]/60 pt-3 px-2 flex justify-between items-center">
                 <span className="text-xs uppercase tracking-wider text-[#A67C52] font-semibold">Langue / Language</span>
                 <select
@@ -276,10 +358,91 @@ export default function Navbar({
                   <option value="EN">EN (English)</option>
                 </select>
               </div>
+
+              {/* Mobile Moon Ritual Trigger */}
+              <div className="border-t border-[#E8DCC6]/60 pt-3 px-2">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsMoonOpen(true);
+                  }}
+                  className="w-full bg-[#1E1A16] hover:bg-[#A67C52] text-[#F7F2EB] py-2.5 px-3 rounded-xs text-xs uppercase font-bold tracking-widest flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <span>{moonData.icon}</span>
+                  <span>{selectedLanguage === 'EN' ? "Lunar Cycles & Rituals" : "L'Astrologie & Rituels du Soir"}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
       </nav>
+
+      {/* ✦ ELEGANT LUNAR RITUAL MODAL DIALOG ✦ */}
+      {isMoonOpen && (
+        <div id="lunar-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          {/* Backdrop screen */}
+          <div 
+            id="lunar-backdrop"
+            onClick={() => setIsMoonOpen(false)}
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity" 
+          />
+          
+          <div className="relative bg-[#1E1A16] text-[#F7F2EB] max-w-md w-full rounded-sm overflow-hidden border border-[#A67C52]/40 shadow-2xl p-6 md:p-8 z-10 my-auto text-center animate-fade-in">
+            {/* Closure button */}
+            <button
+              onClick={() => setIsMoonOpen(false)}
+              className="absolute top-4 right-4 text-[#F7F2EB]/60 hover:text-white transition-colors p-1.5"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Glowing moon emblem */}
+            <div className="relative w-20 h-20 bg-stone-900 border border-[#A67C52]/25 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+              <span className="text-4xl animate-pulse">{moonData.icon}</span>
+              <span className="absolute -bottom-1 bg-[#A67C52] text-[7.5px] font-bold text-white tracking-widest px-2 py-0.5 rounded-full uppercase">
+                {moonData.illumination}%
+              </span>
+            </div>
+
+            <span className="text-[10px] tracking-[0.2em] uppercase text-[#A67C52] font-extrabold block mb-1">
+              {selectedLanguage === 'EN' ? "✦ CHRONOLOGY OF THE NIGHT ✦" : "✦ SAGESSE DES ASTRES ✦"}
+            </span>
+            
+            <h3 className="font-serif text-xl md:text-2xl text-[#E8DCC6] tracking-wide font-normal mb-3">
+              {selectedLanguage === 'EN' ? moonData.labelEn : moonData.labelFr}
+            </h3>
+
+            <p className="text-[11px] text-gray-400 font-sans tracking-widest uppercase block mb-6">
+              {selectedLanguage === 'EN' ? "Evening Ritual Recommendation" : "Rituel du Soir Conseillé"}
+            </p>
+
+            <div className="bg-white/[0.03] border border-[#A67C52]/20 p-5 rounded-xs font-serif italic text-sm text-[#F7F2EB]/95 leading-relaxed mb-6">
+              "{selectedLanguage === 'EN' ? moonData.ritualEn : moonData.ritualFr}"
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setIsMoonOpen(false);
+                  onNavigate('rituels');
+                }}
+                className="w-full bg-[#A67C52] hover:bg-amber-600 text-white py-3.5 text-xs uppercase font-extrabold tracking-widest rounded-xs flex items-center justify-center gap-2 transition-all outline-none"
+              >
+                <Sparkles className="h-4 w-4" />
+                {selectedLanguage === 'EN' ? "Embark on Tonight's Ritual" : "Commencer mon Rituel Astral"}
+              </button>
+
+              <button
+                onClick={() => setIsMoonOpen(false)}
+                className="text-[10px] uppercase font-bold tracking-widest text-[#E8DCC6]/60 hover:text-white underline block mx-auto text-center font-sans mt-2"
+              >
+                {selectedLanguage === 'EN' ? "Close and ponder" : "Fermer et méditer ✦"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

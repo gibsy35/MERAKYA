@@ -1,6 +1,6 @@
 import React from 'react';
 import { Product, CurrencyCode, formatPrice } from '../types';
-import { Eye, Plus } from 'lucide-react';
+import { Eye, Plus, Heart } from 'lucide-react';
 import { Language, PRODUCT_TRANSLATIONS } from '../translations';
 
 interface ProductCardProps {
@@ -10,6 +10,8 @@ interface ProductCardProps {
   selectedCurrency?: CurrencyCode;
   language?: Language;
   key?: any;
+  isWishlisted?: boolean;
+  onToggleWishlist?: (product: Product) => void;
 }
 
 export default function ProductCard({ 
@@ -17,7 +19,9 @@ export default function ProductCard({
   onViewDetails, 
   onAddToCart,
   selectedCurrency = 'MAD',
-  language = 'FR'
+  language = 'FR',
+  isWishlisted = false,
+  onToggleWishlist
 }: ProductCardProps) {
   const trans = PRODUCT_TRANSLATIONS[product.id];
   const name = language === 'EN' && trans ? trans.nameEn : product.name;
@@ -41,7 +45,10 @@ export default function ProductCard({
       id={`product-card-${product.id}`}
       className="group bg-white p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-xl rounded-sm hover:-translate-y-1"
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F7F2EB] rounded-xs mb-4">
+      <div 
+        onClick={() => onViewDetails(product)}
+        className="relative aspect-[3/4] w-full overflow-hidden bg-[#F7F2EB] rounded-xs mb-4 cursor-pointer"
+      >
         {/* Product image */}
         <img 
           src={product.image} 
@@ -50,11 +57,28 @@ export default function ProductCard({
           referrerPolicy="no-referrer"
         />
 
+        {/* Heart Wishlist Button */}
+        <button
+          id={`btn-wishlist-${product.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onToggleWishlist) {
+              onToggleWishlist(product);
+            }
+          }}
+          className="absolute top-2 right-2 z-10 p-2 bg-white/90 backdrop-blur-xs hover:bg-white text-[#A67C52] transition-all rounded-full border border-[#E8DCC6] shadow-sm flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95"
+          title={language === 'EN' ? 'Add to Wishlist' : 'Ajouter aux Favoris'}
+        >
+          <Heart 
+            className={`h-4 w-4 transition-colors ${isWishlisted ? "fill-[#A67C52] text-[#A67C52]" : "text-[#A67C52]"}`} 
+          />
+        </button>
+
         {/* Hover action bar overlays */}
         <div className="absolute inset-x-0 bottom-0 bg-black/40 backdrop-blur-xs flex items-center justify-center gap-3 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
             id={`btn-view-${product.id}`}
-            onClick={() => onViewDetails(product)}
+            onClick={(e) => { e.stopPropagation(); onViewDetails(product); }}
             className="p-2.5 bg-[#F7F2EB] hover:bg-[#A67C52] text-[#1E1A16] hover:text-white transition-all rounded-full"
             title={detailsTitle}
           >
@@ -64,7 +88,7 @@ export default function ProductCard({
           {product.inStock !== false && (
             <button
               id={`btn-quick-add-${product.id}`}
-              onClick={() => onAddToCart(product)}
+              onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
               className="p-2.5 bg-[#A67C52] hover:bg-[#1E1A16] text-white transition-all rounded-full flex items-center gap-1.5"
               title={quickTitle}
             >
@@ -78,24 +102,27 @@ export default function ProductCard({
           {category}
         </div>
 
-        {/* Out of Stock and Preorder Badge */}
+        {/* Out of Stock and Preorder Badge (pushed down slightly to not overlap the Heart button) */}
         {product.status === 'OUT_OF_STOCK' || product.inStock === false || (product.inventory !== undefined && product.inventory <= 0) ? (
-          <div className="absolute top-2 right-2 bg-red-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs animate-pulse">
+          <div className="absolute top-12 right-2 bg-red-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs animate-pulse">
             {language === 'EN' ? 'SOLD OUT' : 'RUPTURE'}
           </div>
         ) : product.status === 'PREORDER' ? (
-          <div className="absolute top-2 right-2 bg-indigo-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
+          <div className="absolute top-12 right-2 bg-indigo-800 text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
             {language === 'EN' ? 'PRE-ORDER' : 'PRÉCOMMANDE'}
           </div>
         ) : product.isLimitedEdition || (product.inventory !== undefined && product.inventory > 0 && product.inventory <= 5) ? (
-          <div className="absolute top-2 right-2 bg-[#A67C52] text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
+          <div className="absolute top-12 right-2 bg-[#A67C52] text-white uppercase text-[8px] md:text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-xs">
             {language === 'EN' ? 'LIMITED' : 'ÉDITION LIMITÉE'}
           </div>
         ) : null}
       </div>
 
       <div className="text-center px-1 flex-1 flex flex-col justify-between">
-        <div>
+        <div 
+          onClick={() => onViewDetails(product)}
+          className="cursor-pointer hover:opacity-90 transition-opacity"
+        >
           <h3 className="font-serif text-[15px] md:text-base text-[#1E1A16] tracking-wide mb-1 font-semibold group-hover:text-[#A67C52] transition-colors line-clamp-2 min-h-[44px]">
             {name}
           </h3>
